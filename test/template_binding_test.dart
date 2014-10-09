@@ -12,6 +12,8 @@ import 'package:observe/observe.dart';
 import 'package:template_binding/template_binding.dart';
 import 'package:unittest/html_config.dart';
 import 'package:unittest/unittest.dart';
+import 'package:observe/mirrors_used.dart'; // make test smaller
+import 'package:smoke/mirrors.dart' as smoke;
 
 // TODO(jmesserly): merge this file?
 import 'binding_syntax.dart' show syntaxTests;
@@ -24,6 +26,7 @@ import 'utils.dart';
 // look for "assertNodesAre".
 
 main() => dirtyCheckZone().run(() {
+  smoke.useMirrors();
   useHtmlConfiguration();
 
   // Load MutationObserver polyfill in case IE needs it.

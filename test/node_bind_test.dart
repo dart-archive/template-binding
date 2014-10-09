@@ -11,6 +11,8 @@ import 'package:observe/observe.dart'
     show toObservable, PathObserver, PropertyPath;
 import 'package:template_binding/template_binding.dart'
     show nodeBind, enableBindingsReflection;
+import 'package:observe/mirrors_used.dart'; // make test smaller
+import 'package:smoke/mirrors.dart' as smoke;
 
 import 'package:unittest/html_config.dart';
 import 'package:unittest/unittest.dart';
@@ -21,6 +23,7 @@ import 'utils.dart';
 var bindings;
 
 main() => dirtyCheckZone().run(() {
+  smoke.useMirrors();
   useHtmlConfiguration();
 
   setUp(() {
