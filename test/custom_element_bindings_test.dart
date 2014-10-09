@@ -13,10 +13,13 @@ import 'package:unittest/html_config.dart';
 import 'package:unittest/unittest.dart';
 import 'package:web_components/polyfill.dart';
 import 'utils.dart';
+import 'package:observe/mirrors_used.dart'; // make test smaller
+import 'package:smoke/mirrors.dart' as smoke;
 
 Future _registered;
 
 main() => dirtyCheckZone().run(() {
+  smoke.useMirrors();
   useHtmlConfiguration();
 
   _registered = customElementsReady.then((_) {

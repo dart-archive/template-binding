@@ -11,14 +11,13 @@
 */*/*/*/packages/*/*: Skip
 */*/*/*/*/packages/*/*: Skip
 
-build/*: Skip  # nothing requires pub-build
-
-[ $runtime == vm && $mode == debug]
-test/template_binding_test: Skip  # Times out
-
 [ $runtime == ie10 ]
-test/custom_element_bindings_test: Pass, RuntimeError # Issue 20714
-test/template_binding_test: Pass, RuntimeError # Issue 19265
+build/test/custom_element_bindings_test: Pass, RuntimeError # Issue 20714
+build/test/template_binding_test: Pass, RuntimeError # Issue 19265
 
 [ $runtime == vm ]
 test/*: Skip
+build/*: Skip
+
+[ $compiler == dart2js ]
+test/*: Skip # use pub-build to invoke dart2js instead
