@@ -29,15 +29,9 @@ main() => dirtyCheckZone().run(() {
   smoke.useMirrors();
   useHtmlConfiguration();
 
-  // Load MutationObserver polyfill in case IE needs it.
-  var script = new ScriptElement()
-      ..src = '/root_dart/pkg/mutation_observer/lib/mutation_observer.min.js';
-  var polyfillLoaded = script.onLoad.first;
-  document.head.append(script);
-
-  setUp(() => polyfillLoaded.then((_) {
+  setUp(() {
     document.body.append(testDiv = new DivElement());
-  }));
+  });
 
   tearDown(() {
     testDiv.remove();

@@ -1,3 +1,14 @@
+#### Pub version 0.14.0
+  * Up to date with release 0.5.1 ([TemplateBinding#d2bddc4][d2bddc4]).
+  * The `js/patches_mdv.js` file is now named `js/flush.js`.
+
+#### Pub version 0.13.1
+  * Up to date with release 0.4.2 ([TemplateBinding#35b7880][35b7880]).
+  * Widen web_components version constraint to include 0.9.0.
+
+#### Pub version 0.13.0+1
+  * Widen web_components version constraint.
+
 #### Pub version 0.13.0
   * Up to date with [TemplateBinding#41e95ea][41e95ea] (release 0.4.0)
   * Using this package now requires some additional javascript polyfills, that
@@ -35,6 +46,8 @@
   * Ported up to commit [TemplateBinding#99e52d][99e52d] and
     [NodeBind#f7cc76][f7cc76].
 
+[41e95ea]: https://github.com/Polymer/TemplateBinding/commit/41e95ea0e4b45543a29ea5240cd4f0defc7208c1
+[35b7880]: https://github.com/Polymer/TemplateBinding/commit/35b78809b80b65f96466e30e8853b944b545303f
 [d9f4543]: https://github.com/Polymer/TemplateBinding/commit/d9f4543dc06935824bfd43564c442b0897ce1c54
 [5b9a3b]: https://github.com/Polymer/TemplateBinding/commit/5b9a3be40682e1ccd5e6c0b04fbe2c54d74b5d1e
 [c47bc1]: https://github.com/Polymer/NodeBind/commit/c47bc1b40d1cf0123b29620820a7111471e83ff3
