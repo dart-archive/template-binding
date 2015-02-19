@@ -1,3 +1,6 @@
+#### Pub version 0.14.0+1
+  * Update `observe` dependency.
+
 #### Pub version 0.14.0
   * Up to date with release 0.5.1 ([TemplateBinding#d2bddc4][d2bddc4]).
   * The `js/patches_mdv.js` file is now named `js/flush.js`.
