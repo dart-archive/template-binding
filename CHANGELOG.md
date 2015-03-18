@@ -1,3 +1,6 @@
+#### Pub version 0.14.0+2
+  * Update `web_components` dependency.
+
 #### Pub version 0.14.0+1
   * Update `observe` dependency.
 
