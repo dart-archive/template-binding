@@ -1,3 +1,7 @@
+#### Pub version 0.14.0+4
+  * Fixed test for new dartium, chrome changed order of click/change events on
+    checkboxes.
+
 #### Pub version 0.14.0+3
   * Update `web_components` dependency.
 

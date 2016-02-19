@@ -399,14 +399,19 @@ formBindings() {
       el.click();
       expect(model['val'], false);
 
+      var done = new Completer();
       el.onClick.listen((_) {
-        expect(model['val'], true);
+        new Future(() {
+          expect(model['val'], true);
+          done.complete();
+        });
       });
       el.onChange.listen((_) {
         expect(model['val'], true);
       });
 
       el.dispatchEvent(new MouseEvent('click', view: window));
+      return done.future;
     });
   });
 
@@ -421,14 +426,19 @@ formBindings() {
       expect(el.checked, true);
 
       int fired = 0;
+      var done = new Completer();
       el.onClick.listen((_) {
         fired++;
-        expect(model['val'], false);
+        new Future(() {
+          expect(model['val'], false);
+          done.complete();
+        });
       });
 
       el.dispatchEvent(new MouseEvent('click', view: window));
 
       expect(fired, 1, reason: 'events dispatched synchronously');
+      return done.future;
     });
   });
 
