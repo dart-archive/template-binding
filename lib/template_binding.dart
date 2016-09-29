@@ -24,6 +24,7 @@ import 'dart:html';
 import 'dart:js' as js show context;
 import 'dart:js' show JsObject;
 import 'dart:svg' show SvgSvgElement;
+import 'package:observable/observable.dart';
 import 'package:observe/observe.dart';
 
 import 'src/mustache_tokens.dart';

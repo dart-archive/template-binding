@@ -6,8 +6,8 @@ library template_binding.test.custom_element_bindings_test;
 
 import 'dart:async';
 import 'dart:html';
-import 'dart:collection' show MapView;
 import 'package:template_binding/template_binding.dart';
+import 'package:observable/observable.dart';
 import 'package:observe/observe.dart';
 import 'package:unittest/html_config.dart';
 import 'package:unittest/unittest.dart';

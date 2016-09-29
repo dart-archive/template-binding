@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:html';
 import 'package:template_binding/template_binding.dart';
+import 'package:observable/observable.dart';
 import 'package:observe/observe.dart';
 import 'package:unittest/unittest.dart';
 import 'utils.dart';
