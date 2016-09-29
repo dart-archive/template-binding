@@ -6,6 +6,7 @@ library template_binding.test.utils;
 
 import 'dart:async';
 import 'dart:html';
+import 'package:observable/observable.dart';
 import 'package:observe/observe.dart';
 
 // Note: tests that import 'utils.dart' rely on the following line to make test
@@ -46,7 +47,7 @@ dispatchEvent(type, target) {
   target.dispatchEvent(new Event(type, cancelable: false));
 }
 
-class FooBarModel extends Observable {
+class FooBarModel extends AutoObservable {
   @observable var foo;
   @observable var bar;
 
@@ -54,7 +55,7 @@ class FooBarModel extends Observable {
 }
 
 @reflectable
-class FooBarNotifyModel extends ChangeNotifier implements FooBarModel {
+class FooBarNotifyModel extends Observable implements FooBarModel {
   var _foo;
   var _bar;
 

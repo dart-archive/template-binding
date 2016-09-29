@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js' show JsObject;
 import 'dart:math' as math;
+import 'package:observable/observable.dart';
 import 'package:observe/observe.dart';
 import 'package:template_binding/template_binding.dart';
 import 'package:unittest/html_config.dart';
@@ -46,11 +47,11 @@ main() => dirtyCheckZone().run(() {
   group('Template', templateInstantiationTests);
 
   group('Binding Delegate API', () {
-    group('with Observable', () {
+    group('with AutoObservable', () {
       syntaxTests(([f, b]) => new FooBarModel(f, b));
     });
 
-    group('with ChangeNotifier', () {
+    group('with Observable', () {
       syntaxTests(([f, b]) => new FooBarNotifyModel(f, b));
     });
   });
@@ -1899,7 +1900,7 @@ templateInstantiationTests() {
       });
     })..observe(div, childList: true, subtree: true);
 
-    Observable.dirtyCheck();
+    AutoObservable.dirtyCheck();
 
     return completer.future;
   });
@@ -2724,7 +2725,7 @@ class DiscardCountingPathObserver extends PathObserver {
   }
 }
 
-class TestAccessorModel extends Observable {
+class TestAccessorModel extends AutoObservable {
   @observable var value = 1;
   var count = 0;
 

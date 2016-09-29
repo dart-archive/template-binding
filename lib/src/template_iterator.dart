@@ -351,7 +351,7 @@ class _TemplateIterator extends Bindable {
     if (value is ObservableList && _hasRepeat && !_oneTime) {
       // Make sure any pending changes aren't delivered, since we're getting
       // a snapshot at this point in time.
-      value.discardListChages();
+      value.discardListChanges();
       _listSub = value.listChanges.listen(_handleSplices);
     }
 
