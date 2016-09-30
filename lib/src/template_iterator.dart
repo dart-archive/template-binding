@@ -38,17 +38,6 @@ _InstanceBindingMap _getBindings(Node node, BindingDelegate delegate) {
   return null;
 }
 
-void _addBindings(Node node, model, [BindingDelegate delegate]) {
-  final bindings = _getBindings(node, delegate);
-  if (bindings != null) {
-    _processBindings(node, bindings, model);
-  }
-
-  for (var c = node.firstChild; c != null; c = c.nextNode) {
-    _addBindings(c, model, delegate);
-  }
-}
-
 MustacheTokens _parseWithDefault(
     Element element, String name, BindingDelegate delegate) {
   var v = element.attributes[name];
@@ -59,8 +48,6 @@ MustacheTokens _parseWithDefault(
 _InstanceBindingMap _parseAttributeBindings(
     Element element, BindingDelegate delegate) {
   var bindings = null;
-  var ifFound = false;
-  var bindFound = false;
   var isTemplateNode = isSemanticTemplate(element);
 
   element.attributes.forEach((name, value) {
@@ -389,7 +376,6 @@ class _TemplateIterator extends Bindable {
   DocumentFragment _extractInstanceAt(int index) {
     var previousInstanceLast = _getLastInstanceNode(index - 1);
     var lastNode = _getLastInstanceNode(index);
-    var parent = _templateElement.parentNode;
     var instance = _instances.removeAt(index);
 
     while (lastNode != previousInstanceLast) {
@@ -542,11 +528,4 @@ class _TemplateIterator extends Bindable {
     _templateExt._iterator = null;
     _closed = true;
   }
-}
-
-// Dart note: the JavaScript version just puts an expando on the array.
-class _BoundNodes {
-  final List<Node> nodes;
-  final List<Bindable> instanceBindings;
-  _BoundNodes(this.nodes, this.instanceBindings);
 }

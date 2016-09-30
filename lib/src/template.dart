@@ -19,8 +19,6 @@ class TemplateBindExtension extends NodeBindExtension {
 
   HtmlDocument _stagingDocument;
 
-  _InstanceBindingMap _bindingMap;
-
   Node _refContent;
 
   TemplateBindExtension._(Element node) : super._(node);
@@ -90,7 +88,6 @@ class TemplateBindExtension extends NodeBindExtension {
     if (content.firstChild == null) return _emptyInstance;
 
     final map = _getInstanceBindingMap(content, delegate);
-    final staging = _getTemplateStagingDocument();
     final instance = _stagingDocument.createDocumentFragment();
 
     final instanceExt = new _InstanceExtension();
@@ -134,16 +131,6 @@ class TemplateBindExtension extends NodeBindExtension {
     _ensureSetModelScheduled();
   }
 
-  static Node _deepCloneIgnoreTemplateContent(Node node, stagingDocument) {
-    var clone = stagingDocument.importNode(node, false);
-    if (isSemanticTemplate(clone)) return clone;
-
-    for (var c = node.firstChild; c != null; c = c.nextNode) {
-      clone.append(_deepCloneIgnoreTemplateContent(c, stagingDocument));
-    }
-    return clone;
-  }
-
   /**
    * The binding delegate which is inherited through the tree. It can be used
    * to configure custom syntax for `{{bindings}}` inside this template.
@@ -158,7 +145,6 @@ class TemplateBindExtension extends NodeBindExtension {
     _bindingDelegate = value;
 
     // Clear cached state based on the binding delegate.
-    _bindingMap = null;
     if (_iterator != null) {
       _iterator._initPrepareFunctions = false;
       _iterator._instanceModelFn = null;
@@ -289,7 +275,6 @@ class TemplateBindExtension extends NodeBindExtension {
   }
 
   static final _contentsOwner = new Expando();
-  static final _ownerStagingDocument = new Expando();
 
   // http://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/templates/index.html#dfn-template-contents-owner
   static HtmlDocument _getOrCreateTemplateContentsOwner(Element template) {
@@ -307,21 +292,6 @@ class TemplateBindExtension extends NodeBindExtension {
       _contentsOwner[doc] = d;
     }
     return d;
-  }
-
-  HtmlDocument _getTemplateStagingDocument() {
-    if (_stagingDocument == null) {
-      var owner = _node.ownerDocument;
-      var doc = _ownerStagingDocument[owner];
-      if (doc == null) {
-        doc = owner.implementation.createHtmlDocument('');
-        _isStagingDocument[doc] = true;
-        _baseUriWorkaround(doc);
-        _ownerStagingDocument[owner] = doc;
-      }
-      _stagingDocument = doc;
-    }
-    return _stagingDocument;
   }
 
   // For non-template browsers, the parser will disallow <template> in certain
@@ -513,14 +483,6 @@ Node _searchRefId(Node node, String id) {
     node = instance._templateCreator;
     if (node == null) return null;
   }
-}
-
-_getInstanceRoot(node) {
-  while (node.parentNode != null) {
-    node = node.parentNode;
-  }
-  _InstanceExtension instance = _instanceExtension[node];
-  return instance != null && instance._templateCreator != null ? node : null;
 }
 
 // Note: JS code tests that getElementById is present. We can't do that

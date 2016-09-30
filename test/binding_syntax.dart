@@ -223,7 +223,6 @@ class TestBindingSyntax extends BindingDelegate {
     var tagName = node is Element ? node.tagName : 'TEXT';
     int id = log.length;
     log.add(['prepare', path, name, tagName]);
-    final outerNode = node;
     return (model, node, oneTime) {
       var tagName = node is Element ? node.tagName : 'TEXT';
       log.add(['bindFn', model, tagName, id]);
@@ -271,7 +270,6 @@ class TestPositionChangedSyntax extends BindingDelegate {
   var log = [];
 
   prepareInstancePositionChanged(template) {
-    int id = log.length;
     log.add(['prepare', template]);
     return (templateInstance, index) {
       log.add(['bindFn', templateInstance.model, index]);
