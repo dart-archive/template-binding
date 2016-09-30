@@ -88,6 +88,7 @@ class TemplateBindExtension extends NodeBindExtension {
     if (content.firstChild == null) return _emptyInstance;
 
     final map = _getInstanceBindingMap(content, delegate);
+    final staging = _getTemplateStagingDocument();
     final instance = _stagingDocument.createDocumentFragment();
 
     final instanceExt = new _InstanceExtension();
@@ -275,6 +276,7 @@ class TemplateBindExtension extends NodeBindExtension {
   }
 
   static final _contentsOwner = new Expando();
+  static final _ownerStagingDocument = new Expando();
 
   // http://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/templates/index.html#dfn-template-contents-owner
   static HtmlDocument _getOrCreateTemplateContentsOwner(Element template) {
@@ -292,6 +294,21 @@ class TemplateBindExtension extends NodeBindExtension {
       _contentsOwner[doc] = d;
     }
     return d;
+  }
+
+  HtmlDocument _getTemplateStagingDocument() {
+    if (_stagingDocument == null) {
+      var owner = _node.ownerDocument;
+      var doc = _ownerStagingDocument[owner];
+      if (doc == null) {
+        doc = owner.implementation.createHtmlDocument('');
+        _isStagingDocument[doc] = true;
+        _baseUriWorkaround(doc);
+        _ownerStagingDocument[owner] = doc;
+      }
+      _stagingDocument = doc;
+    }
+    return _stagingDocument;
   }
 
   // For non-template browsers, the parser will disallow <template> in certain

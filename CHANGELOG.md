@@ -1,3 +1,9 @@
+#### Pub version 0.14.0+6
+  * Fixed bug whereby too much code was pruned in 0.14.0+5
+
+#### Pub version 0.14.0+5
+  * Updated to use package:observable
+
 #### Pub version 0.14.0+4
   * Fixed test for new dartium, chrome changed order of click/change events on
     checkboxes.
