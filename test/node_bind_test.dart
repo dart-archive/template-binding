@@ -8,7 +8,7 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:observable/observable.dart' show toObservable;
-import 'package:observe/observe.dart' PathObserver;
+import 'package:observe/observe.dart' show PathObserver;
 import 'package:template_binding/template_binding.dart'
     show nodeBind, enableBindingsReflection;
 import 'package:observe/mirrors_used.dart'; // make test smaller
