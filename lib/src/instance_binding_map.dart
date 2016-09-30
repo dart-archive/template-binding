@@ -27,9 +27,8 @@ class _TemplateBindingMap extends _InstanceBindingMap {
   _TemplateBindingMap(List bindings) : super(bindings);
 }
 
-_InstanceBindingMap _createInstanceBindingMap(Node node,
-    BindingDelegate delegate) {
-
+_InstanceBindingMap _createInstanceBindingMap(
+    Node node, BindingDelegate delegate) {
   _InstanceBindingMap map = _getBindings(node, delegate);
   if (map == null) map = new _InstanceBindingMap([]);
 
@@ -48,17 +47,22 @@ _InstanceBindingMap _createInstanceBindingMap(Node node,
   return map;
 }
 
-Node _cloneAndBindInstance(Node node, Node parent, Document stagingDocument,
-    _InstanceBindingMap bindings, model, BindingDelegate delegate,
-    List instanceBindings, [TemplateInstance instanceRecord]) {
-
+Node _cloneAndBindInstance(
+    Node node,
+    Node parent,
+    Document stagingDocument,
+    _InstanceBindingMap bindings,
+    model,
+    BindingDelegate delegate,
+    List instanceBindings,
+    [TemplateInstance instanceRecord]) {
   var clone = parent.append(stagingDocument.importNode(node, false));
 
   int i = 0;
   for (var c = node.firstChild; c != null; c = c.nextNode, i++) {
     var childMap = bindings != null ? bindings.getChild(i) : null;
-    _cloneAndBindInstance(c, clone, stagingDocument, childMap, model, delegate,
-        instanceBindings);
+    _cloneAndBindInstance(
+        c, clone, stagingDocument, childMap, model, delegate, instanceBindings);
   }
 
   if (bindings.isTemplate) {

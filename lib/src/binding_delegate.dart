@@ -44,8 +44,8 @@ class BindingDelegate {
    * node and model, and either returns null or an object with a `value`
    * property. This allows the syntax to reinterpret the model for each binding.
    */
-  PrepareBindingFunction prepareBinding(String path, String name, Node node)
-      => null;
+  PrepareBindingFunction prepareBinding(String path, String name, Node node) =>
+      null;
 
   /**
    * Returns a function that can optionally replace the model that will be
@@ -60,7 +60,8 @@ class BindingDelegate {
    * inside this template changes.
    */
   PrepareInstancePositionChangedFunction prepareInstancePositionChanged(
-      Element template) => null;
+          Element template) =>
+      null;
 
   Expando<_InstanceBindingMap> _bindingMaps;
 
@@ -74,5 +75,5 @@ typedef PrepareBindingFunction(model, Node node, bool oneTime);
 
 typedef PrepareInstanceModelFunction(model);
 
-typedef PrepareInstancePositionChangedFunction(TemplateInstance instance,
-    int index);
+typedef PrepareInstancePositionChangedFunction(
+    TemplateInstance instance, int index);

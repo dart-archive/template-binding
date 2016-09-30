@@ -27,37 +27,38 @@ import 'utils.dart';
 // look for "assertNodesAre".
 
 main() => dirtyCheckZone().run(() {
-  smoke.useMirrors();
-  useHtmlConfiguration();
+      smoke.useMirrors();
+      useHtmlConfiguration();
 
-  setUp(() {
-    document.body.append(testDiv = new DivElement());
-  });
+      setUp(() {
+        document.body.append(testDiv = new DivElement());
+      });
 
-  tearDown(() {
-    testDiv.remove();
-    clearAllTemplates(testDiv);
-    testDiv = null;
-  });
+      tearDown(() {
+        testDiv.remove();
+        clearAllTemplates(testDiv);
+        testDiv = null;
+      });
 
-  test('MutationObserver is supported', () {
-    expect(MutationObserver.supported, true, reason: 'polyfill was loaded.');
-  });
+      test('MutationObserver is supported', () {
+        expect(MutationObserver.supported, true,
+            reason: 'polyfill was loaded.');
+      });
 
-  group('Template', templateInstantiationTests);
+      group('Template', templateInstantiationTests);
 
-  group('Binding Delegate API', () {
-    group('with AutoObservable', () {
-      syntaxTests(([f, b]) => new FooBarModel(f, b));
+      group('Binding Delegate API', () {
+        group('with AutoObservable', () {
+          syntaxTests(([f, b]) => new FooBarModel(f, b));
+        });
+
+        group('with Observable', () {
+          syntaxTests(([f, b]) => new FooBarNotifyModel(f, b));
+        });
+      });
+
+      group('Compat', compatTests);
     });
-
-    group('with Observable', () {
-      syntaxTests(([f, b]) => new FooBarNotifyModel(f, b));
-    });
-  });
-
-  group('Compat', compatTests);
-});
 
 var expando = new Expando('test');
 void addExpandos(node) {
@@ -93,15 +94,17 @@ templateInstantiationTests() {
 
       // Dart note: null is used instead of undefined to clear the template.
       templateBind(div.firstChild).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-      templateBind(div.firstChild).model = 123;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes.last.text, 'text');
-    });
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+          templateBind(div.firstChild).model = 123;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes.last.text, 'text');
+        });
   });
 
   test('oneTime-Bind', () {
@@ -113,7 +116,6 @@ templateInstantiationTests() {
       expect(div.nodes.last.text, 'text');
 
       model['bound'] = false;
-
     }).then(endOfMicrotask).then((_) {
       expect(div.nodes.length, 2);
       expect(div.nodes.last.text, 'text');
@@ -152,15 +154,15 @@ templateInstantiationTests() {
   });
 
   test('Bind If', () {
-    var div = createTestHtml(
-        '<template bind="{{ bound }}" if="{{ predicate }}">'
-          'value:{{ value }}'
-        '</template>');
+    var div =
+        createTestHtml('<template bind="{{ bound }}" if="{{ predicate }}">'
+            'value:{{ value }}'
+            '</template>');
     // Dart note: predicate changed from 0->null because 0 isn't falsey in Dart.
     // See https://code.google.com/p/dart/issues/detail?id=11956
     // Changed bound from null->1 since null is equivalent to JS undefined,
     // and would cause the template to not be expanded.
-    var m = toObservable({ 'predicate': null, 'bound': 1 });
+    var m = toObservable({'predicate': null, 'bound': 1});
     var template = div.firstChild;
     bool errorSeen = false;
     runZoned(() {
@@ -175,39 +177,44 @@ templateInstantiationTests() {
       m['predicate'] = 1;
 
       expect(errorSeen, isFalse);
-    }).then(nextMicrotask).then((_) {
-      expect(errorSeen, isTrue);
-      expect(div.nodes.length, 1);
+    })
+        .then(nextMicrotask)
+        .then((_) {
+          expect(errorSeen, isTrue);
+          expect(div.nodes.length, 1);
 
-      m['bound'] = toObservable({ 'value': 2 });
+          m['bound'] = toObservable({'value': 2});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:2');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:2');
+          m['bound']['value'] = 3;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-      m['bound']['value'] = 3;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      templateBind(template).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Bind oneTime-If - predicate false', () {
-    var div = createTestHtml(
-        '<template bind="{{ bound }}" if="[[ predicate ]]">'
-          'value:{{ value }}'
-        '</template>');
+    var div =
+        createTestHtml('<template bind="{{ bound }}" if="[[ predicate ]]">'
+            'value:{{ value }}'
+            '</template>');
     // Dart note: predicate changed from 0->null because 0 isn't falsey in Dart.
     // See https://code.google.com/p/dart/issues/detail?id=11956
     // Changed bound from null->1 since null is equivalent to JS undefined,
     // and would cause the template to not be expanded.
-    var m = toObservable({ 'predicate': null, 'bound': 1 });
+    var m = toObservable({'predicate': null, 'bound': 1});
     var template = div.firstChild;
     templateBind(template).model = m;
 
@@ -215,36 +222,40 @@ templateInstantiationTests() {
       expect(div.nodes.length, 1);
 
       m['predicate'] = 1;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
+          m['bound'] = toObservable({'value': 2});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
 
-      m['bound'] = toObservable({ 'value': 2 });
+          m['bound']['value'] = 3;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-
-      m['bound']['value'] = 3;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-
-      templateBind(template).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Bind oneTime-If - predicate true', () {
-    var div = createTestHtml(
-        '<template bind="{{ bound }}" if="[[ predicate ]]">'
-          'value:{{ value }}'
-        '</template>');
+    var div =
+        createTestHtml('<template bind="{{ bound }}" if="[[ predicate ]]">'
+            'value:{{ value }}'
+            '</template>');
 
     // Dart note: changed bound from null->1 since null is equivalent to JS
     // undefined, and would cause the template to not be expanded.
-    var m = toObservable({ 'predicate': 1, 'bound': 1 });
+    var m = toObservable({'predicate': 1, 'bound': 1});
     var template = div.firstChild;
     bool errorSeen = false;
     runZoned(() {
@@ -256,38 +267,46 @@ templateInstantiationTests() {
 
     return new Future(() {
       expect(div.nodes.length, 1);
-      m['bound'] = toObservable({ 'value': 2 });
+      m['bound'] = toObservable({'value': 2});
       expect(errorSeen, isTrue);
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:2');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:2');
 
-      m['bound']['value'] = 3;
+          m['bound']['value'] = 3;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
+          m['predicate'] = null; // will have no effect
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-      m['predicate'] = null; // will have no effect
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      templateBind(template).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('oneTime-Bind If', () {
-    var div = createTestHtml(
-        '<template bind="[[ bound ]]" if="{{ predicate }}">'
-          'value:{{ value }}'
-        '</template>');
+    var div =
+        createTestHtml('<template bind="[[ bound ]]" if="{{ predicate }}">'
+            'value:{{ value }}'
+            '</template>');
 
-    var m = toObservable({'predicate': null, 'bound': {'value': 2}});
+    var m = toObservable({
+      'predicate': null,
+      'bound': {'value': 2}
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
 
@@ -295,37 +314,44 @@ templateInstantiationTests() {
       expect(div.nodes.length, 1);
 
       m['predicate'] = 1;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:2');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:2');
+          m['bound']['value'] = 3;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-      m['bound']['value'] = 3;
+          m['bound'] = toObservable({'value': 4});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      m['bound'] = toObservable({'value': 4 });
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      templateBind(template).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('oneTime-Bind oneTime-If', () {
-    var div = createTestHtml(
-        '<template bind="[[ bound ]]" if="[[ predicate ]]">'
-          'value:{{ value }}'
-        '</template>');
+    var div =
+        createTestHtml('<template bind="[[ bound ]]" if="[[ predicate ]]">'
+            'value:{{ value }}'
+            '</template>');
 
-    var m = toObservable({'predicate': 1, 'bound': {'value': 2}});
+    var m = toObservable({
+      'predicate': 1,
+      'bound': {'value': 2}
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
 
@@ -334,35 +360,42 @@ templateInstantiationTests() {
       expect(div.lastChild.text, 'value:2');
 
       m['bound']['value'] = 3;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
+          m['bound'] = toObservable({'value': 4});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-      m['bound'] = toObservable({'value': 4 });
+          m['predicate'] = false;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      m['predicate'] = false;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
-
-      templateBind(template).model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Bind If, 2', () {
     var div = createTestHtml(
         '<template bind="{{ foo }}" if="{{ bar }}">{{ bat }}</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'bar': null, 'foo': { 'bat': 'baz' } });
+    var m = toObservable({
+      'bar': null,
+      'foo': {'bat': 'baz'}
+    });
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 1);
@@ -378,21 +411,25 @@ templateInstantiationTests() {
     var div = createTestHtml('<template if="{{ foo }}">{{ value }}</template>');
     // Dart note: foo changed from 0->null because 0 isn't falsey in Dart.
     // See https://code.google.com/p/dart/issues/detail?id=11956
-    var m = toObservable({ 'foo': null, 'value': 'foo' });
+    var m = toObservable({'foo': null, 'value': 'foo'});
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 1);
 
       m['foo'] = 1;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'foo');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'foo');
 
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Bind If minimal discardChanges', () {
@@ -400,58 +437,63 @@ templateInstantiationTests() {
         '<template bind="{{bound}}" if="{{predicate}}">value:{{ value }}'
         '</template>');
     // Dart Note: bound changed from null->{}.
-    var m = toObservable({ 'bound': {}, 'predicate': null });
+    var m = toObservable({'bound': {}, 'predicate': null});
     var template = div.firstChild;
 
-    var discardChangesCalled = { 'bound': 0, 'predicate': 0 };
+    var discardChangesCalled = {'bound': 0, 'predicate': 0};
     templateBind(template)
-        ..model = m
-        ..bindingDelegate =
-            new BindIfMinimalDiscardChanges(discardChangesCalled);
+      ..model = m
+      ..bindingDelegate = new BindIfMinimalDiscardChanges(discardChangesCalled);
 
     return new Future(() {
       expect(discardChangesCalled['bound'], 0);
       expect(discardChangesCalled['predicate'], 0);
       expect(div.childNodes.length, 1);
       m['predicate'] = 1;
-    }).then(endOfMicrotask).then((_) {
-      expect(discardChangesCalled['bound'], 1);
-      expect(discardChangesCalled['predicate'], 0);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(discardChangesCalled['bound'], 1);
+          expect(discardChangesCalled['predicate'], 0);
 
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:');
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:');
 
-      m['bound'] = toObservable({'value': 2});
-    }).then(endOfMicrotask).then((_) {
-      expect(discardChangesCalled['bound'], 1);
-      expect(discardChangesCalled['predicate'], 1);
+          m['bound'] = toObservable({'value': 2});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(discardChangesCalled['bound'], 1);
+          expect(discardChangesCalled['predicate'], 1);
 
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:2');
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:2');
 
-      m['bound']['value'] = 3;
+          m['bound']['value'] = 3;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(discardChangesCalled['bound'], 1);
+          expect(discardChangesCalled['predicate'], 1);
 
-    }).then(endOfMicrotask).then((_) {
-      expect(discardChangesCalled['bound'], 1);
-      expect(discardChangesCalled['predicate'], 1);
+          expect(div.nodes.length, 2);
+          expect(div.lastChild.text, 'value:3');
 
-      expect(div.nodes.length, 2);
-      expect(div.lastChild.text, 'value:3');
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(discardChangesCalled['bound'], 1);
+          expect(discardChangesCalled['predicate'], 1);
 
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(discardChangesCalled['bound'], 1);
-      expect(discardChangesCalled['predicate'], 1);
-
-      expect(div.nodes.length, 1);
-    });
+          expect(div.nodes.length, 1);
+        });
   });
-
 
   test('Empty-If', () {
     var div = createTestHtml('<template if>{{ value }}</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'value': 'foo' });
+    var m = toObservable({'value': 'foo'});
     templateBind(template).model = null;
     return new Future(() {
       expect(div.nodes.length, 1);
@@ -466,14 +508,13 @@ templateInstantiationTests() {
   test('OneTime - simple text', () {
     var div = createTestHtml('<template bind>[[ value ]]</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'value': 'foo' });
+    var m = toObservable({'value': 'foo'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
       expect(div.lastChild.text, 'foo');
 
       m['value'] = 'bar';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged.
       expect(div.lastChild.text, 'foo');
@@ -481,10 +522,10 @@ templateInstantiationTests() {
   });
 
   test('OneTime - compound text', () {
-    var div = createTestHtml(
-        '<template bind>[[ foo ]] bar [[ baz ]]</template>');
+    var div =
+        createTestHtml('<template bind>[[ foo ]] bar [[ baz ]]</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'foo': 'FOO', 'baz': 'BAZ' });
+    var m = toObservable({'foo': 'FOO', 'baz': 'BAZ'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
@@ -492,7 +533,6 @@ templateInstantiationTests() {
 
       m['foo'] = 'FI';
       m['baz'] = 'BA';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged.
       expect(div.nodes.length, 2);
@@ -501,10 +541,10 @@ templateInstantiationTests() {
   });
 
   test('OneTime/Dynamic Mixed - compound text', () {
-    var div = createTestHtml(
-        '<template bind>[[ foo ]] bar {{ baz }}</template>');
+    var div =
+        createTestHtml('<template bind>[[ foo ]] bar {{ baz }}</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'foo': 'FOO', 'baz': 'BAZ' });
+    var m = toObservable({'foo': 'FOO', 'baz': 'BAZ'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
@@ -512,7 +552,6 @@ templateInstantiationTests() {
 
       m['foo'] = 'FI';
       m['baz'] = 'BA';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged [[ foo ]].
       expect(div.nodes.length, 2);
@@ -524,14 +563,13 @@ templateInstantiationTests() {
     var div = createTestHtml(
         '<template bind><div foo="[[ value ]]"></div></template>');
     var template = div.firstChild;
-    var m = toObservable({ 'value': 'foo' });
+    var m = toObservable({'value': 'foo'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
       expect(div.lastChild.attributes['foo'], 'foo');
 
       m['value'] = 'bar';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged.
       expect(div.nodes.length, 2);
@@ -540,12 +578,11 @@ templateInstantiationTests() {
   });
 
   test('OneTime - compound attribute', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<div foo="[[ value ]]:[[ otherValue ]]"></div>'
+    var div = createTestHtml('<template bind>'
+        '<div foo="[[ value ]]:[[ otherValue ]]"></div>'
         '</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'value': 'foo', 'otherValue': 'bar' });
+    var m = toObservable({'value': 'foo', 'otherValue': 'bar'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
@@ -553,7 +590,6 @@ templateInstantiationTests() {
 
       m['value'] = 'baz';
       m['otherValue'] = 'bot';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged.
       expect(div.lastChild.attributes['foo'], 'foo:bar');
@@ -561,12 +597,11 @@ templateInstantiationTests() {
   });
 
   test('OneTime/Dynamic mixed - compound attribute', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<div foo="{{ value }}:[[ otherValue ]]"></div>'
+    var div = createTestHtml('<template bind>'
+        '<div foo="{{ value }}:[[ otherValue ]]"></div>'
         '</template>');
     var template = div.firstChild;
-    var m = toObservable({ 'value': 'foo', 'otherValue': 'bar' });
+    var m = toObservable({'value': 'foo', 'otherValue': 'bar'});
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 2);
@@ -574,7 +609,6 @@ templateInstantiationTests() {
 
       m['value'] = 'baz';
       m['otherValue'] = 'bot';
-
     }).then(endOfMicrotask).then((_) {
       // unchanged [[ otherValue ]].
       expect(div.lastChild.attributes['foo'], 'baz:bar');
@@ -586,36 +620,44 @@ templateInstantiationTests() {
         '<template repeat="{{ items }}" if="{{ predicate }}">{{}}</template>');
     // Dart note: predicate changed from 0->null because 0 isn't falsey in Dart.
     // See https://code.google.com/p/dart/issues/detail?id=11956
-    var m = toObservable({ 'predicate': null, 'items': [1] });
+    var m = toObservable({
+      'predicate': null,
+      'items': [1]
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 1);
 
       m['predicate'] = 1;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
+          m['items']..add(2)..add(3);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
+          expect(div.nodes[1].text, '1');
+          expect(div.nodes[2].text, '2');
+          expect(div.nodes[3].text, '3');
 
-      m['items']..add(2)..add(3);
+          m['items'] = [4];
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '4');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
-      expect(div.nodes[1].text, '1');
-      expect(div.nodes[2].text, '2');
-      expect(div.nodes[3].text, '3');
-
-      m['items'] = [4];
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '4');
-
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Repeat oneTime-If (predicate false)', () {
@@ -623,38 +665,49 @@ templateInstantiationTests() {
         '<template repeat="{{ items }}" if="[[ predicate ]]">{{}}</template>');
     // Dart note: predicate changed from 0->null because 0 isn't falsey in Dart.
     // See https://code.google.com/p/dart/issues/detail?id=11956
-    var m = toObservable({ 'predicate': null, 'items': [1] });
+    var m = toObservable({
+      'predicate': null,
+      'items': [1]
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 1);
 
       m['predicate'] = 1;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1, reason: 'unchanged');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1, reason: 'unchanged');
+          m['items']..add(2)..add(3);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1, reason: 'unchanged');
 
-      m['items']..add(2)..add(3);
+          m['items'] = [4];
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1, reason: 'unchanged');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1, reason: 'unchanged');
-
-      m['items'] = [4];
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1, reason: 'unchanged');
-
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Repeat oneTime-If (predicate true)', () {
     var div = createTestHtml(
         '<template repeat="{{ items }}" if="[[ predicate ]]">{{}}</template>');
 
-    var m = toObservable({ 'predicate': true, 'items': [1] });
+    var m = toObservable({
+      'predicate': true,
+      'items': [1]
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
@@ -662,70 +715,86 @@ templateInstantiationTests() {
       expect(div.nodes[1].text, '1');
 
       m['items']..add(2)..add(3);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
+          expect(div.nodes[1].text, '1');
+          expect(div.nodes[2].text, '2');
+          expect(div.nodes[3].text, '3');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
-      expect(div.nodes[1].text, '1');
-      expect(div.nodes[2].text, '2');
-      expect(div.nodes[3].text, '3');
+          m['items'] = [4];
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '4');
 
-      m['items'] = [4];
+          m['predicate'] = false;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2, reason: 'unchanged');
+          expect(div.nodes[1].text, '4', reason: 'unchanged');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '4');
-
-      m['predicate'] = false;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2, reason: 'unchanged');
-      expect(div.nodes[1].text, '4', reason: 'unchanged');
-
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('oneTime-Repeat If', () {
     var div = createTestHtml(
         '<template repeat="[[ items ]]" if="{{ predicate }}">{{}}</template>');
 
-    var m = toObservable({ 'predicate': false, 'items': [1] });
+    var m = toObservable({
+      'predicate': false,
+      'items': [1]
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
       expect(div.nodes.length, 1);
 
       m['predicate'] = true;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
+          m['items']..add(2)..add(3);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-      m['items']..add(2)..add(3);
+          m['items'] = [4];
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
-
-      m['items'] = [4];
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
-
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('oneTime-Repeat oneTime-If', () {
     var div = createTestHtml(
         '<template repeat="[[ items ]]" if="[[ predicate ]]">{{}}</template>');
 
-    var m = toObservable({ 'predicate': true, 'items': [1] });
+    var m = toObservable({
+      'predicate': true,
+      'items': [1]
+    });
     var template = div.firstChild;
     templateBind(template).model = m;
     return new Future(() {
@@ -733,27 +802,32 @@ templateInstantiationTests() {
       expect(div.nodes[1].text, '1');
 
       m['items']..add(2)..add(3);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
+          m['items'] = [4];
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-      m['items'] = [4];
+          m['predicate'] = false;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes[1].text, '1');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
-
-      m['predicate'] = false;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes[1].text, '1');
-
-      templateBind(template).model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          templateBind(template).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('TextTemplateWithNullStringBinding', () {
@@ -767,24 +841,31 @@ templateInstantiationTests() {
       expect(div.nodes.last.text, 'aBc');
 
       model['b'] = 'b';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'abc');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'abc');
 
-      model['b'] = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'ac');
+          model['b'] = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'ac');
 
-      model = null;
-    }).then(endOfMicrotask).then((_) {
-      // setting model isn't bindable.
-      expect(div.nodes.last.text, 'ac');
-    });
+          model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          // setting model isn't bindable.
+          expect(div.nodes.last.text, 'ac');
+        });
   });
 
   test('TextTemplateWithBindingPath', () {
-    var div = createTestHtml(
-        '<template bind="{{ data }}">a{{b}}c</template>');
-    var model = toObservable({ 'data': {'b': 'B'} });
+    var div = createTestHtml('<template bind="{{ data }}">a{{b}}c</template>');
+    var model = toObservable({
+      'data': {'b': 'B'}
+    });
     var template = div.firstChild;
     templateBind(template).model = model;
 
@@ -793,27 +874,35 @@ templateInstantiationTests() {
       expect(div.nodes.last.text, 'aBc');
 
       model['data']['b'] = 'b';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'abc');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'abc');
 
-      model['data'] = toObservable({'b': 'X'});
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'aXc');
+          model['data'] = toObservable({'b': 'X'});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'aXc');
 
-      // Dart note: changed from `null` since our null means don't render a model.
-      model['data'] = toObservable({});
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'ac');
+          // Dart note: changed from `null` since our null means don't render a model.
+          model['data'] = toObservable({});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'ac');
 
-      model['data'] = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          model['data'] = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('TextTemplateWithBindingAndConditional', () {
-    var div = createTestHtml(
-        '<template bind="{{}}" if="{{ d }}">a{{b}}c</template>');
+    var div =
+        createTestHtml('<template bind="{{}}" if="{{ d }}">a{{b}}c</template>');
     var template = div.firstChild;
     var model = toObservable({'b': 'B', 'd': 1});
     templateBind(template).model = model;
@@ -823,31 +912,37 @@ templateInstantiationTests() {
       expect(div.nodes.last.text, 'aBc');
 
       model['b'] = 'b';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.text, 'abc');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.text, 'abc');
 
-      // TODO(jmesserly): MDV set this to empty string and relies on JS conversion
-      // rules. Is that intended?
-      // See https://github.com/Polymer/TemplateBinding/issues/59
-      model['d'] = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
+          // TODO(jmesserly): MDV set this to empty string and relies on JS conversion
+          // rules. Is that intended?
+          // See https://github.com/Polymer/TemplateBinding/issues/59
+          model['d'] = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
 
-      model['d'] = 'here';
-      model['b'] = 'd';
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.nodes.last.text, 'adc');
-    });
+          model['d'] = 'here';
+          model['b'] = 'd';
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.nodes.last.text, 'adc');
+        });
   });
 
   test('TemplateWithTextBinding2', () {
-    var div = createTestHtml(
-        '<template bind="{{ b }}">a{{value}}c</template>');
+    var div = createTestHtml('<template bind="{{ b }}">a{{value}}c</template>');
     expect(div.nodes.length, 1);
     var template = div.firstChild;
-    var model = toObservable({'b': {'value': 'B'}});
+    var model = toObservable({
+      'b': {'value': 'B'}
+    });
     templateBind(template).model = model;
 
     return new Future(() {
@@ -861,8 +956,7 @@ templateInstantiationTests() {
   });
 
   test('TemplateWithAttributeBinding', () {
-    var div = createTestHtml(
-        '<template bind="{{}}">'
+    var div = createTestHtml('<template bind="{{}}">'
         '<div foo="a{{b}}c"></div>'
         '</template>');
     var template = div.firstChild;
@@ -874,18 +968,21 @@ templateInstantiationTests() {
       expect(div.nodes.last.attributes['foo'], 'aBc');
 
       model['b'] = 'b';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.attributes['foo'], 'abc');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.attributes['foo'], 'abc');
 
-      model['b'] = 'X';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.attributes['foo'], 'aXc');
-    });
+          model['b'] = 'X';
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.attributes['foo'], 'aXc');
+        });
   });
 
   test('TemplateWithConditionalBinding', () {
-    var div = createTestHtml(
-        '<template bind="{{}}">'
+    var div = createTestHtml('<template bind="{{}}">'
         '<div foo?="{{b}}"></div>'
         '</template>');
     var template = div.firstChild;
@@ -904,10 +1001,11 @@ templateInstantiationTests() {
   });
 
   test('Repeat', () {
-    var div = createTestHtml(
-        '<template repeat="{{ array }}">{{}},</template>');
+    var div = createTestHtml('<template repeat="{{ array }}">{{}},</template>');
 
-    var model = toObservable({'array': [0, 1, 2]});
+    var model = toObservable({
+      'array': [0, 1, 2]
+    });
     var template = templateBind(div.firstChild);
     template.model = model;
 
@@ -916,36 +1014,41 @@ templateInstantiationTests() {
       expect(div.text, '0,1,2,');
 
       model['array'].length = 1;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
+          expect(div.text, '0,');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
-      expect(div.text, '0,');
+          model['array'].addAll([3, 4]);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
+          expect(div.text, '0,3,4,');
 
-      model['array'].addAll([3, 4]);
+          model['array'].removeRange(1, 2);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 3);
+          expect(div.text, '0,4,');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
-      expect(div.text, '0,3,4,');
+          model['array'].addAll([5, 6]);
+          model['array'] = toObservable(['x', 'y']);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 3);
+          expect(div.text, 'x,y,');
 
-      model['array'].removeRange(1, 2);
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 3);
-      expect(div.text, '0,4,');
-
-      model['array'].addAll([5, 6]);
-      model['array'] = toObservable(['x', 'y']);
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 3);
-      expect(div.text, 'x,y,');
-
-      template.model = null;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-      expect(div.text, '');
-    });
+          template.model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+          expect(div.text, '');
+        });
   });
 
   test('Repeat - oneTime', () {
@@ -959,21 +1062,29 @@ templateInstantiationTests() {
       expect(div.nodes.length, 4);
 
       model.length = 1;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
 
-      model.addAll([3, 4]);
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
+          model.addAll([3, 4]);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
 
-      model.removeRange(1, 2);
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
+          model.removeRange(1, 2);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
 
-      template.model = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
-    });
+          template.model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
+        });
   });
 
   test('Repeat - Reuse Instances', () {
@@ -996,33 +1107,39 @@ templateInstantiationTests() {
       checkExpandos(template.nextNode);
 
       model.sort((a, b) => a['val'] - b['val']);
-    }).then(endOfMicrotask).then((_) {
-      checkExpandos(template.nextNode);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          checkExpandos(template.nextNode);
 
-      model = toObservable(model.reversed);
-      templateBind(template).model = model;
-    }).then(endOfMicrotask).then((_) {
-      checkExpandos(template.nextNode);
+          model = toObservable(model.reversed);
+          templateBind(template).model = model;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          checkExpandos(template.nextNode);
 
-      for (var item in model) {
-        item['val'] += 1;
-      }
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes[1].text, "11");
-      expect(div.nodes[2].text, "9");
-      expect(div.nodes[3].text, "6");
-      expect(div.nodes[4].text, "3");
-      expect(div.nodes[5].text, "2");
-    });
+          for (var item in model) {
+            item['val'] += 1;
+          }
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes[1].text, "11");
+          expect(div.nodes[2].text, "9");
+          expect(div.nodes[3].text, "6");
+          expect(div.nodes[4].text, "3");
+          expect(div.nodes[5].text, "2");
+        });
   });
 
   test('Bind - Reuse Instance', () {
-    var div = createTestHtml(
-        '<template bind="{{ foo }}">{{ bar }}</template>');
+    var div = createTestHtml('<template bind="{{ foo }}">{{ bar }}</template>');
 
     var template = div.firstChild;
-    var model = toObservable({ 'foo': { 'bar': 5 }});
+    var model = toObservable({
+      'foo': {'bar': 5}
+    });
     templateBind(template).model = model;
 
     return new Future(() {
@@ -1039,8 +1156,7 @@ templateInstantiationTests() {
   });
 
   test('Repeat-Empty', () {
-    var div = createTestHtml(
-        '<template repeat>text</template>');
+    var div = createTestHtml('<template repeat>text</template>');
 
     var template = div.firstChild;
     var model = toObservable([0, 1, 2]);
@@ -1050,30 +1166,39 @@ templateInstantiationTests() {
       expect(div.nodes.length, 4);
 
       model.length = 1;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 2);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 2);
 
-      model.addAll(toObservable([3, 4]));
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
+          model.addAll(toObservable([3, 4]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
 
-      model.removeRange(1, 2);
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 3);
-    });
+          model.removeRange(1, 2);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 3);
+        });
   });
 
   test('Removal from iteration needs to unbind', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}"><a>{{v}}</a></template>');
+    var div = createTestHtml('<template repeat="{{}}"><a>{{v}}</a></template>');
     var template = div.firstChild;
-    var model = toObservable([{'v': 0}, {'v': 1}, {'v': 2}, {'v': 3},
-        {'v': 4}]);
+    var model = toObservable([
+      {'v': 0},
+      {'v': 1},
+      {'v': 2},
+      {'v': 3},
+      {'v': 4}
+    ]);
     templateBind(template).model = model;
 
     var nodes, vs;
     return new Future(() {
-
       nodes = div.nodes.skip(1).toList();
       vs = model.toList();
 
@@ -1082,23 +1207,26 @@ templateInstantiationTests() {
       }
 
       model.length = 3;
-    }).then(endOfMicrotask).then((_) {
-      for (var i = 0; i < 5; i++) {
-        expect(nodes[i].text, '$i');
-      }
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          for (var i = 0; i < 5; i++) {
+            expect(nodes[i].text, '$i');
+          }
 
-      vs[3]['v'] = 33;
-      vs[4]['v'] = 44;
-    }).then(endOfMicrotask).then((_) {
-      for (var i = 0; i < 5; i++) {
-        expect(nodes[i].text, '$i');
-      }
-    });
+          vs[3]['v'] = 33;
+          vs[4]['v'] = 44;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          for (var i = 0; i < 5; i++) {
+            expect(nodes[i].text, '$i');
+          }
+        });
   });
 
   test('Template.clear', () {
-    var div = createTestHtml(
-        '<template repeat>{{}}</template>');
+    var div = createTestHtml('<template repeat>{{}}</template>');
     var template = div.firstChild;
     templateBind(template).model = [0, 1, 2];
 
@@ -1115,7 +1243,6 @@ templateInstantiationTests() {
 
       // test that template still works if new model assigned
       templateBind(template).model = [3, 4];
-
     }).then(endOfMicrotask).then((_) {
       expect(div.nodes.length, 3);
       expect(div.nodes[1].text, '3');
@@ -1124,8 +1251,7 @@ templateInstantiationTests() {
   });
 
   test('DOM Stability on Iteration', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}">{{}}</template>');
+    var div = createTestHtml('<template repeat="{{}}">{{}}</template>');
     var template = div.firstChild;
     var model = toObservable([1, 2, 3, 4, 5]);
     templateBind(template).model = model;
@@ -1138,45 +1264,52 @@ templateInstantiationTests() {
 
       model.removeAt(0);
       model.removeLast();
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4, reason: 'list has 3 items');
+          expect(identical(div.nodes[1], nodes[2]), true,
+              reason: '2 not removed');
+          expect(identical(div.nodes[2], nodes[3]), true,
+              reason: '3 not removed');
+          expect(identical(div.nodes[3], nodes[4]), true,
+              reason: '4 not removed');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4, reason: 'list has 3 items');
-      expect(identical(div.nodes[1], nodes[2]), true, reason: '2 not removed');
-      expect(identical(div.nodes[2], nodes[3]), true, reason: '3 not removed');
-      expect(identical(div.nodes[3], nodes[4]), true, reason: '4 not removed');
+          model.insert(0, 5);
+          model[2] = 6;
+          model.add(7);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 6, reason: 'list has 5 items');
+          expect(nodes.contains(div.nodes[1]), false,
+              reason: '5 is a new node');
+          expect(identical(div.nodes[2], nodes[2]), true);
+          expect(nodes.contains(div.nodes[3]), false,
+              reason: '6 is a new node');
+          expect(identical(div.nodes[4], nodes[4]), true);
+          expect(nodes.contains(div.nodes[5]), false,
+              reason: '7 is a new node');
 
-      model.insert(0, 5);
-      model[2] = 6;
-      model.add(7);
+          nodes = div.nodes.toList();
 
-    }).then(endOfMicrotask).then((_) {
-
-      expect(div.nodes.length, 6, reason: 'list has 5 items');
-      expect(nodes.contains(div.nodes[1]), false, reason: '5 is a new node');
-      expect(identical(div.nodes[2], nodes[2]), true);
-      expect(nodes.contains(div.nodes[3]), false, reason: '6 is a new node');
-      expect(identical(div.nodes[4], nodes[4]), true);
-      expect(nodes.contains(div.nodes[5]), false, reason: '7 is a new node');
-
-      nodes = div.nodes.toList();
-
-      model.insert(2, 8);
-
-    }).then(endOfMicrotask).then((_) {
-
-      expect(div.nodes.length, 7, reason: 'list has 6 items');
-      expect(identical(div.nodes[1], nodes[1]), true);
-      expect(identical(div.nodes[2], nodes[2]), true);
-      expect(nodes.contains(div.nodes[3]), false, reason: '8 is a new node');
-      expect(identical(div.nodes[4], nodes[3]), true);
-      expect(identical(div.nodes[5], nodes[4]), true);
-      expect(identical(div.nodes[6], nodes[5]), true);
-    });
+          model.insert(2, 8);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 7, reason: 'list has 6 items');
+          expect(identical(div.nodes[1], nodes[1]), true);
+          expect(identical(div.nodes[2], nodes[2]), true);
+          expect(nodes.contains(div.nodes[3]), false,
+              reason: '8 is a new node');
+          expect(identical(div.nodes[4], nodes[3]), true);
+          expect(identical(div.nodes[5], nodes[4]), true);
+          expect(identical(div.nodes[6], nodes[5]), true);
+        });
   });
 
   test('Repeat2', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}">{{value}}</template>');
+    var div = createTestHtml('<template repeat="{{}}">{{value}}</template>');
     expect(div.nodes.length, 1);
 
     var template = div.firstChild;
@@ -1194,24 +1327,32 @@ templateInstantiationTests() {
       expect(div.nodes[3].text, '2');
 
       model[1]['value'] = 'One';
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
-      expect(div.nodes[1].text, '0');
-      expect(div.nodes[2].text, 'One');
-      expect(div.nodes[3].text, '2');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
+          expect(div.nodes[1].text, '0');
+          expect(div.nodes[2].text, 'One');
+          expect(div.nodes[3].text, '2');
 
-      model.replaceRange(0, 1, toObservable([{'value': 'Zero'}]));
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 4);
-      expect(div.nodes[1].text, 'Zero');
-      expect(div.nodes[2].text, 'One');
-      expect(div.nodes[3].text, '2');
-    });
+          model.replaceRange(
+              0,
+              1,
+              toObservable([
+                {'value': 'Zero'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 4);
+          expect(div.nodes[1].text, 'Zero');
+          expect(div.nodes[2].text, 'One');
+          expect(div.nodes[3].text, '2');
+        });
   });
 
   test('TemplateWithInputValue', () {
-    var div = createTestHtml(
-        '<template bind="{{}}">'
+    var div = createTestHtml('<template bind="{{}}">'
         '<input value="{{x}}">'
         '</template>');
     var template = div.firstChild;
@@ -1224,23 +1365,26 @@ templateInstantiationTests() {
 
       model['x'] = 'bye';
       expect(div.nodes.last.value, 'hi');
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.value, 'bye');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.value, 'bye');
 
-      div.nodes.last.value = 'hello';
-      dispatchEvent('input', div.nodes.last);
-      expect(model['x'], 'hello');
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.last.value, 'hello');
-    });
+          div.nodes.last.value = 'hello';
+          dispatchEvent('input', div.nodes.last);
+          expect(model['x'], 'hello');
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.last.value, 'hello');
+        });
   });
 
 //////////////////////////////////////////////////////////////////////////////
 
   test('Decorated', () {
-    var div = createTestHtml(
-        '<template bind="{{ XX }}" id="t1">'
-          '<p>Crew member: {{name}}, Job title: {{title}}</p>'
+    var div = createTestHtml('<template bind="{{ XX }}" id="t1">'
+        '<p>Crew member: {{name}}, Job title: {{title}}</p>'
         '</template>'
         '<template bind="{{ XY }}" id="t2" ref="t1"></template>');
 
@@ -1279,7 +1423,6 @@ templateInstantiationTests() {
     t.remove();
   });
 
-
   test('Bind', () {
     var div = createTestHtml('<template bind="{{}}">Hi {{ name }}</template>');
     var template = div.firstChild;
@@ -1290,8 +1433,8 @@ templateInstantiationTests() {
   });
 
   test('BindPlaceHolderHasNewLine', () {
-    var div = createTestHtml(
-        '<template bind="{{}}">Hi {{\nname\n}}</template>');
+    var div =
+        createTestHtml('<template bind="{{}}">Hi {{\nname\n}}</template>');
     var template = div.firstChild;
     var model = toObservable({'name': 'Leela'});
     templateBind(template).model = model;
@@ -1301,9 +1444,8 @@ templateInstantiationTests() {
 
   test('BindWithRef', () {
     var id = 't${new math.Random().nextInt(100)}';
-    var div = createTestHtml(
-        '<template id="$id">'
-          'Hi {{ name }}'
+    var div = createTestHtml('<template id="$id">'
+        'Hi {{ name }}'
         '</template>'
         '<template ref="$id" bind="{{}}"></template>');
 
@@ -1325,23 +1467,22 @@ templateInstantiationTests() {
     //   -both before and after the reference
     // The following asserts ensure that all referenced templates content is
     // found.
-    var div = createTestHtml(
-      '<template bind>'
+    var div = createTestHtml('<template bind>'
         '<template bind ref=doc></template>'
         '<template id=elRoot>EL_ROOT</template>'
         '<template bind>'
-          '<template bind ref=elRoot></template>'
-          '<template bind>'
-            '<template bind ref=subA></template>'
-            '<template id=subB>SUB_B</template>'
-            '<template bind>'
-              '<template bind ref=subB></template>'
-            '</template>'
-          '</template>'
-          '<template id=subA>SUB_A</template>'
+        '<template bind ref=elRoot></template>'
+        '<template bind>'
+        '<template bind ref=subA></template>'
+        '<template id=subB>SUB_B</template>'
+        '<template bind>'
+        '<template bind ref=subB></template>'
         '</template>'
-      '</template>'
-      '<template id=doc>DOC</template>');
+        '</template>'
+        '<template id=subA>SUB_A</template>'
+        '</template>'
+        '</template>'
+        '<template id=doc>DOC</template>');
     var t = div.firstChild;
     var fragment = templateBind(t).createInstance({});
     expect(fragment.nodes.length, 14);
@@ -1354,8 +1495,7 @@ templateInstantiationTests() {
 
   test('Update Ref', () {
     // Updating ref by observing the attribute is dependent on MutationObserver
-    var div = createTestHtml(
-        '<template id=A>Hi, {{}}</template>'
+    var div = createTestHtml('<template id=A>Hi, {{}}</template>'
         '<template id=B>Hola, {{}}</template>'
         '<template ref=A repeat></template>');
 
@@ -1387,13 +1527,15 @@ templateInstantiationTests() {
   });
 
   test('Bound Ref', () {
-    var div = createTestHtml(
-        '<template id=A>Hi, {{}}</template>'
+    var div = createTestHtml('<template id=A>Hi, {{}}</template>'
         '<template id=B>Hola, {{}}</template>'
         '<template ref="{{ ref }}" repeat="{{ people }}"></template>');
 
     var template = div.nodes[2];
-    var model = toObservable({'ref': 'A', 'people': ['Fry']});
+    var model = toObservable({
+      'ref': 'A',
+      'people': ['Fry']
+    });
     templateBind(template).model = model;
 
     return new Future(() {
@@ -1402,7 +1544,6 @@ templateInstantiationTests() {
 
       model['ref'] = 'B';
       model['people'].add('Leela');
-
     }).then(endOfMicrotask).then((x) {
       expect(div.nodes.length, 5);
 
@@ -1413,15 +1554,14 @@ templateInstantiationTests() {
 
   test('BindWithDynamicRef', () {
     var id = 't${new math.Random().nextInt(100)}';
-    var div = createTestHtml(
-        '<template id="$id">'
-          'Hi {{ name }}'
+    var div = createTestHtml('<template id="$id">'
+        'Hi {{ name }}'
         '</template>'
         '<template ref="{{ id }}" bind="{{}}"></template>');
 
     var t1 = div.firstChild;
     var t2 = div.nodes[1];
-    var model = toObservable({'name': 'Fry', 'id': id });
+    var model = toObservable({'name': 'Fry', 'id': id});
     templateBind(t1).model = model;
     templateBind(t2).model = model;
 
@@ -1453,47 +1593,76 @@ templateInstantiationTests() {
 
     templateBind(t).model = m;
     return new Future(() {
-
       assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal']);
 
       m['contacts'].add(toObservable({'name': 'Alex'}));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal', 'Hi Alex']);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal', 'Hi Alex']);
 
-      m['contacts'].replaceRange(0, 2,
-          toObservable([{'name': 'Rafael'}, {'name': 'Erik'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Neal', 'Hi Alex']);
+          m['contacts'].replaceRange(
+              0,
+              2,
+              toObservable([
+                {'name': 'Rafael'},
+                {'name': 'Erik'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Neal', 'Hi Alex']);
 
-      m['contacts'].removeRange(1, 3);
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Alex']);
+          m['contacts'].removeRange(1, 3);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Rafael', 'Hi Alex']);
 
-      m['contacts'].insertAll(1,
-          toObservable([{'name': 'Erik'}, {'name': 'Dimitri'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
+          m['contacts'].insertAll(
+              1,
+              toObservable([
+                {'name': 'Erik'},
+                {'name': 'Dimitri'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(
+              div, ['Hi Rafael', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
 
-      m['contacts'].replaceRange(0, 1,
-          toObservable([{'name': 'Tab'}, {'name': 'Neal'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Tab', 'Hi Neal', 'Hi Erik', 'Hi Dimitri',
-          'Hi Alex']);
+          m['contacts'].replaceRange(
+              0,
+              1,
+              toObservable([
+                {'name': 'Tab'},
+                {'name': 'Neal'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(
+              div, ['Hi Tab', 'Hi Neal', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
 
-      m['contacts'] = toObservable([{'name': 'Alex'}]);
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Alex']);
+          m['contacts'] = toObservable([
+            {'name': 'Alex'}
+          ]);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Alex']);
 
-      m['contacts'].length = 0;
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, []);
-    });
+          m['contacts'].length = 0;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, []);
+        });
   });
 
   test('RepeatModelSet', () {
-    var div = createTestHtml(
-        '<template repeat="{{ contacts }}">'
-          'Hi {{ name }}'
+    var div = createTestHtml('<template repeat="{{ contacts }}">'
+        'Hi {{ name }}'
         '</template>');
     var template = div.firstChild;
     var m = toObservable({
@@ -1510,8 +1679,8 @@ templateInstantiationTests() {
   });
 
   test('RepeatEmptyPath', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}">Hi {{ name }}</template>');
+    var div =
+        createTestHtml('<template repeat="{{}}">Hi {{ name }}</template>');
     var t = div.nodes.first;
 
     var m = toObservable([
@@ -1521,40 +1690,69 @@ templateInstantiationTests() {
     ]);
     templateBind(t).model = m;
     return new Future(() {
-
       assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal']);
 
       m.add(toObservable({'name': 'Alex'}));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal', 'Hi Alex']);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Raf', 'Hi Arv', 'Hi Neal', 'Hi Alex']);
 
-      m.replaceRange(0, 2, toObservable([{'name': 'Rafael'}, {'name': 'Erik'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Neal', 'Hi Alex']);
+          m.replaceRange(
+              0,
+              2,
+              toObservable([
+                {'name': 'Rafael'},
+                {'name': 'Erik'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Neal', 'Hi Alex']);
 
-      m.removeRange(1, 3);
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Alex']);
+          m.removeRange(1, 3);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Rafael', 'Hi Alex']);
 
-      m.insertAll(1, toObservable([{'name': 'Erik'}, {'name': 'Dimitri'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Rafael', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
+          m.insertAll(
+              1,
+              toObservable([
+                {'name': 'Erik'},
+                {'name': 'Dimitri'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(
+              div, ['Hi Rafael', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
 
-      m.replaceRange(0, 1, toObservable([{'name': 'Tab'}, {'name': 'Neal'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Tab', 'Hi Neal', 'Hi Erik', 'Hi Dimitri',
-          'Hi Alex']);
+          m.replaceRange(
+              0,
+              1,
+              toObservable([
+                {'name': 'Tab'},
+                {'name': 'Neal'}
+              ]));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(
+              div, ['Hi Tab', 'Hi Neal', 'Hi Erik', 'Hi Dimitri', 'Hi Alex']);
 
-      m.length = 0;
-      m.add(toObservable({'name': 'Alex'}));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Alex']);
-    });
+          m.length = 0;
+          m.add(toObservable({'name': 'Alex'}));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Alex']);
+        });
   });
 
   test('RepeatNullModel', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}">Hi {{ name }}</template>');
+    var div =
+        createTestHtml('<template repeat="{{}}">Hi {{ name }}</template>');
     var t = div.nodes.first;
 
     var m = null;
@@ -1569,8 +1767,8 @@ templateInstantiationTests() {
   });
 
   test('RepeatReuse', () {
-    var div = createTestHtml(
-        '<template repeat="{{}}">Hi {{ name }}</template>');
+    var div =
+        createTestHtml('<template repeat="{{}}">Hi {{ name }}</template>');
     var t = div.nodes.first;
 
     var m = toObservable([
@@ -1587,26 +1785,37 @@ templateInstantiationTests() {
       node2 = div.nodes[2];
       node3 = div.nodes[3];
 
-      m.replaceRange(1, 2, toObservable([{'name': 'Erik'}]));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Raf', 'Hi Erik', 'Hi Neal']);
-      expect(div.nodes[1], node1,
-          reason: 'model[0] did not change so the node should not have changed');
-      expect(div.nodes[2], isNot(equals(node2)),
-          reason: 'Should not reuse when replacing');
-      expect(div.nodes[3], node3,
-          reason: 'model[2] did not change so the node should not have changed');
+      m.replaceRange(
+          1,
+          2,
+          toObservable([
+            {'name': 'Erik'}
+          ]));
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Raf', 'Hi Erik', 'Hi Neal']);
+          expect(div.nodes[1], node1,
+              reason:
+                  'model[0] did not change so the node should not have changed');
+          expect(div.nodes[2], isNot(equals(node2)),
+              reason: 'Should not reuse when replacing');
+          expect(div.nodes[3], node3,
+              reason:
+                  'model[2] did not change so the node should not have changed');
 
-      node2 = div.nodes[2];
-      m.insert(0, toObservable({'name': 'Alex'}));
-    }).then(endOfMicrotask).then((_) {
-      assertNodesAre(div, ['Hi Alex', 'Hi Raf', 'Hi Erik', 'Hi Neal']);
-    });
+          node2 = div.nodes[2];
+          m.insert(0, toObservable({'name': 'Alex'}));
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          assertNodesAre(div, ['Hi Alex', 'Hi Raf', 'Hi Erik', 'Hi Neal']);
+        });
   });
 
   test('TwoLevelsDeepBug', () {
     var div = createTestHtml(
-      '<template bind="{{}}"><span><span>{{ foo }}</span></span></template>');
+        '<template bind="{{}}"><span><span>{{ foo }}</span></span></template>');
     var template = div.firstChild;
     var model = toObservable({'foo': 'bar'});
     templateBind(template).model = model;
@@ -1616,15 +1825,13 @@ templateInstantiationTests() {
   });
 
   test('Checked', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<input type="checkbox" checked="{{a}}">'
+    var div = createTestHtml('<template bind>'
+        '<input type="checkbox" checked="{{a}}">'
         '</template>');
     var t = div.nodes.first;
-    templateBind(t).model = toObservable({'a': true });
+    templateBind(t).model = toObservable({'a': true});
 
     return new Future(() {
-
       var instanceInput = t.nextNode;
       expect(instanceInput.checked, true);
 
@@ -1648,38 +1855,47 @@ templateInstantiationTests() {
 
     recursivelySetTemplateModel(div, m);
     return new Future(() {
-
       var i = start;
       expect(div.nodes[i++].text, '1');
       expect(div.nodes[i++].tagName, 'TEMPLATE');
       expect(div.nodes[i++].text, '2');
 
       m['a']['b'] = 11;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes[start].text, '11');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes[start].text, '11');
 
-      m['a']['c'] = toObservable({'d': 22});
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes[start + 2].text, '22');
+          m['a']['c'] = toObservable({'d': 22});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes[start + 2].text, '22');
 
-      //clearAllTemplates(div);
-    });
+          //clearAllTemplates(div);
+        });
   }
 
-  test('Nested', () => nestedHelper(
-      '<template bind="{{a}}">'
-        '{{b}}'
-        '<template bind="{{c}}">'
+  test(
+      'Nested',
+      () => nestedHelper(
+          '<template bind="{{a}}">'
+          '{{b}}'
+          '<template bind="{{c}}">'
           '{{d}}'
-        '</template>'
-      '</template>', 1));
+          '</template>'
+          '</template>',
+          1));
 
-  test('NestedWithRef', () => nestedHelper(
-        '<template id="inner">{{d}}</template>'
-        '<template id="outer" bind="{{a}}">'
+  test(
+      'NestedWithRef',
+      () => nestedHelper(
+          '<template id="inner">{{d}}</template>'
+          '<template id="outer" bind="{{a}}">'
           '{{b}}'
           '<template ref="inner" bind="{{c}}"></template>'
-        '</template>', 2));
+          '</template>',
+          2));
 
   nestedIterateInstantiateHelper(s, start) {
     var div = createTestHtml(s);
@@ -1699,7 +1915,6 @@ templateInstantiationTests() {
 
     recursivelySetTemplateModel(div, m);
     return new Future(() {
-
       var i = start;
       expect(div.nodes[i++].text, '1');
       expect(div.nodes[i++].tagName, 'TEMPLATE');
@@ -1712,29 +1927,34 @@ templateInstantiationTests() {
         'b': 3,
         'c': {'d': 33}
       });
-
     }).then(endOfMicrotask).then((_) {
       expect(div.nodes[start + 3].text, '3');
       expect(div.nodes[start + 5].text, '33');
     });
   }
 
-  test('NestedRepeatBind', () => nestedIterateInstantiateHelper(
-      '<template repeat="{{a}}">'
-        '{{b}}'
-        '<template bind="{{c}}">'
+  test(
+      'NestedRepeatBind',
+      () => nestedIterateInstantiateHelper(
+          '<template repeat="{{a}}">'
+          '{{b}}'
+          '<template bind="{{c}}">'
           '{{d}}'
-        '</template>'
-      '</template>', 1));
+          '</template>'
+          '</template>',
+          1));
 
-  test('NestedRepeatBindWithRef', () => nestedIterateInstantiateHelper(
-      '<template id="inner">'
-        '{{d}}'
-      '</template>'
-      '<template repeat="{{a}}">'
-        '{{b}}'
-        '<template ref="inner" bind="{{c}}"></template>'
-      '</template>', 2));
+  test(
+      'NestedRepeatBindWithRef',
+      () => nestedIterateInstantiateHelper(
+          '<template id="inner">'
+          '{{d}}'
+          '</template>'
+          '<template repeat="{{a}}">'
+          '{{b}}'
+          '<template ref="inner" bind="{{c}}"></template>'
+          '</template>',
+          2));
 
   nestedIterateIterateHelper(s, start) {
     var div = createTestHtml(s);
@@ -1743,18 +1963,23 @@ templateInstantiationTests() {
       'a': [
         {
           'b': 1,
-          'c': [{'d': 11}, {'d': 12}]
+          'c': [
+            {'d': 11},
+            {'d': 12}
+          ]
         },
         {
           'b': 2,
-          'c': [{'d': 21}, {'d': 22}]
+          'c': [
+            {'d': 21},
+            {'d': 22}
+          ]
         }
       ]
     });
 
     recursivelySetTemplateModel(div, m);
     return new Future(() {
-
       var i = start;
       expect(div.nodes[i++].text, '1');
       expect(div.nodes[i++].tagName, 'TEMPLATE');
@@ -1767,7 +1992,11 @@ templateInstantiationTests() {
 
       m['a'][1] = toObservable({
         'b': 3,
-        'c': [{'d': 31}, {'d': 32}, {'d': 33}]
+        'c': [
+          {'d': 31},
+          {'d': 32},
+          {'d': 33}
+        ]
       });
 
       i = start + 4;
@@ -1779,28 +2008,33 @@ templateInstantiationTests() {
     });
   }
 
-  test('NestedRepeatBind', () => nestedIterateIterateHelper(
-      '<template repeat="{{a}}">'
-        '{{b}}'
-        '<template repeat="{{c}}">'
+  test(
+      'NestedRepeatBind',
+      () => nestedIterateIterateHelper(
+          '<template repeat="{{a}}">'
+          '{{b}}'
+          '<template repeat="{{c}}">'
           '{{d}}'
-        '</template>'
-      '</template>', 1));
+          '</template>'
+          '</template>',
+          1));
 
-  test('NestedRepeatRepeatWithRef', () => nestedIterateIterateHelper(
-      '<template id="inner">'
-        '{{d}}'
-      '</template>'
-      '<template repeat="{{a}}">'
-        '{{b}}'
-        '<template ref="inner" repeat="{{c}}"></template>'
-      '</template>', 2));
+  test(
+      'NestedRepeatRepeatWithRef',
+      () => nestedIterateIterateHelper(
+          '<template id="inner">'
+          '{{d}}'
+          '</template>'
+          '<template repeat="{{a}}">'
+          '{{b}}'
+          '<template ref="inner" repeat="{{c}}"></template>'
+          '</template>',
+          2));
 
   test('NestedRepeatSelfRef', () {
-    var div = createTestHtml(
-        '<template id="t" repeat="{{}}">'
-          '{{name}}'
-          '<template ref="t" repeat="{{items}}"></template>'
+    var div = createTestHtml('<template id="t" repeat="{{}}">'
+        '{{name}}'
+        '<template ref="t" repeat="{{items}}"></template>'
         '</template>');
 
     var template = div.firstChild;
@@ -1812,21 +2046,13 @@ templateInstantiationTests() {
           {
             'name': 'Item 1.1',
             'items': [
-              {
-                 'name': 'Item 1.1.1',
-                 'items': []
-              }
+              {'name': 'Item 1.1.1', 'items': []}
             ]
           },
-          {
-            'name': 'Item 1.2'
-          }
+          {'name': 'Item 1.2'}
         ]
       },
-      {
-        'name': 'Item 2',
-        'items': []
-      },
+      {'name': 'Item 2', 'items': []},
     ]);
 
     templateBind(template).model = m;
@@ -1856,21 +2082,26 @@ templateInstantiationTests() {
   // Note: we don't need a zone for this test, and we don't want to alter timing
   // since we're testing a rather subtle relationship between select and option.
   test('Attribute Template Option/Optgroup', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<select selectedIndex="{{ selected }}">'
-            '<optgroup template repeat="{{ groups }}" label="{{ name }}">'
-              '<option template repeat="{{ items }}">{{ val }}</option>'
-            '</optgroup>'
-          '</select>'
+    var div = createTestHtml('<template bind>'
+        '<select selectedIndex="{{ selected }}">'
+        '<optgroup template repeat="{{ groups }}" label="{{ name }}">'
+        '<option template repeat="{{ items }}">{{ val }}</option>'
+        '</optgroup>'
+        '</select>'
         '</template>');
 
     var template = div.firstChild;
     var m = toObservable({
       'selected': 1,
-      'groups': [{
-        'name': 'one', 'items': [{ 'val': 0 }, { 'val': 1 }]
-      }],
+      'groups': [
+        {
+          'name': 'one',
+          'items': [
+            {'val': 0},
+            {'val': 1}
+          ]
+        }
+      ],
     });
 
     templateBind(template).model = m;
@@ -1885,8 +2116,9 @@ templateInstantiationTests() {
       new Future(() {
         expect(select.nodes.length, 2);
 
-        expect(select.selectedIndex, 1, reason: 'selected index should update '
-            'after template expands.');
+        expect(select.selectedIndex, 1,
+            reason: 'selected index should update '
+                'after template expands.');
 
         expect(select.nodes[0].tagName, 'TEMPLATE');
         var optgroup = select.nodes[1];
@@ -1908,19 +2140,24 @@ templateInstantiationTests() {
   test('NestedIterateTableMixedSemanticNative', () {
     if (!parserHasNativeTemplate) return null;
 
-    var div = createTestHtml(
-        '<table><tbody>'
-          '<template repeat="{{}}">'
-            '<tr>'
-              '<td template repeat="{{}}" class="{{ val }}">{{ val }}</td>'
-            '</tr>'
-          '</template>'
+    var div = createTestHtml('<table><tbody>'
+        '<template repeat="{{}}">'
+        '<tr>'
+        '<td template repeat="{{}}" class="{{ val }}">{{ val }}</td>'
+        '</tr>'
+        '</template>'
         '</tbody></table>');
     var template = div.firstChild.firstChild.firstChild;
 
     var m = toObservable([
-      [{ 'val': 0 }, { 'val': 1 }],
-      [{ 'val': 2 }, { 'val': 3 }]
+      [
+        {'val': 0},
+        {'val': 1}
+      ],
+      [
+        {'val': 2},
+        {'val': 3}
+      ]
     ]);
 
     templateBind(template).model = m;
@@ -1948,22 +2185,26 @@ templateInstantiationTests() {
   });
 
   test('NestedIterateTable', () {
-    var div = createTestHtml(
-        '<table><tbody>'
-          '<tr template repeat="{{}}">'
-            '<td template repeat="{{}}" class="{{ val }}">{{ val }}</td>'
-          '</tr>'
+    var div = createTestHtml('<table><tbody>'
+        '<tr template repeat="{{}}">'
+        '<td template repeat="{{}}" class="{{ val }}">{{ val }}</td>'
+        '</tr>'
         '</tbody></table>');
     var template = div.firstChild.firstChild.firstChild;
 
     var m = toObservable([
-      [{ 'val': 0 }, { 'val': 1 }],
-      [{ 'val': 2 }, { 'val': 3 }]
+      [
+        {'val': 0},
+        {'val': 1}
+      ],
+      [
+        {'val': 2},
+        {'val': 3}
+      ]
     ]);
 
     templateBind(template).model = m;
     return new Future(() {
-
       var i = 1;
       var tbody = div.nodes[0].nodes[0];
 
@@ -1987,24 +2228,21 @@ templateInstantiationTests() {
   });
 
   test('NestedRepeatDeletionOfMultipleSubTemplates', () {
-    var div = createTestHtml(
+    var div = createTestHtml('<ul>'
+        '<template repeat="{{}}" id=t1>'
+        '<li>{{name}}'
         '<ul>'
-          '<template repeat="{{}}" id=t1>'
-            '<li>{{name}}'
-              '<ul>'
-                '<template ref=t1 repeat="{{items}}"></template>'
-              '</ul>'
-            '</li>'
-          '</template>'
+        '<template ref=t1 repeat="{{items}}"></template>'
+        '</ul>'
+        '</li>'
+        '</template>'
         '</ul>');
 
     var m = toObservable([
       {
         'name': 'Item 1',
         'items': [
-          {
-            'name': 'Item 1.1'
-          }
+          {'name': 'Item 1.1'}
         ]
       }
     ]);
@@ -2026,20 +2264,17 @@ templateInstantiationTests() {
   });
 
   test('DeepNested', () {
-    var div = createTestHtml(
-      '<template bind="{{a}}">'
+    var div = createTestHtml('<template bind="{{a}}">'
         '<p>'
-          '<template bind="{{b}}">'
-            '{{ c }}'
-          '</template>'
+        '<template bind="{{b}}">'
+        '{{ c }}'
+        '</template>'
         '</p>'
-      '</template>');
+        '</template>');
     var template = div.firstChild;
     var m = toObservable({
       'a': {
-        'b': {
-          'c': 42
-        }
+        'b': {'c': 42}
       }
     });
     templateBind(template).model = m;
@@ -2073,18 +2308,14 @@ templateInstantiationTests() {
   });
 
   test('TemplateContentRemovedNested', () {
-    var div = createTestHtml(
+    var div = createTestHtml('<template bind="{{}}">'
+        '{{ a }}'
         '<template bind="{{}}">'
-          '{{ a }}'
-          '<template bind="{{}}">'
-            '{{ b }}'
-          '</template>'
+        '{{ b }}'
+        '</template>'
         '</template>');
     var template = div.firstChild;
-    var model = toObservable({
-      'a': 1,
-      'b': 2
-    });
+    var model = toObservable({'a': 1, 'b': 2});
     templateBind(template).model = model;
     return new Future(() {
       expect(div.nodes[0].text, '');
@@ -2095,8 +2326,8 @@ templateInstantiationTests() {
   });
 
   test('BindWithUndefinedModel', () {
-    var div = createTestHtml(
-        '<template bind="{{}}" if="{{}}">{{ a }}</template>');
+    var div =
+        createTestHtml('<template bind="{{}}" if="{{}}">{{ a }}</template>');
     var template = div.firstChild;
 
     var model = toObservable({'a': 42});
@@ -2106,33 +2337,34 @@ templateInstantiationTests() {
 
       model = null;
       templateBind(template).model = model;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 1);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 1);
 
-      model = toObservable({'a': 42});
-      templateBind(template).model = model;
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes[1].text, '42');
-    });
+          model = toObservable({'a': 42});
+          templateBind(template).model = model;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes[1].text, '42');
+        });
   });
 
   test('BindNested', () {
-    var div = createTestHtml(
-        '<template bind="{{}}">'
-          'Name: {{ name }}'
-          '<template bind="{{wife}}" if="{{wife}}">'
-            'Wife: {{ name }}'
-          '</template>'
-          '<template bind="{{child}}" if="{{child}}">'
-            'Child: {{ name }}'
-          '</template>'
+    var div = createTestHtml('<template bind="{{}}">'
+        'Name: {{ name }}'
+        '<template bind="{{wife}}" if="{{wife}}">'
+        'Wife: {{ name }}'
+        '</template>'
+        '<template bind="{{child}}" if="{{child}}">'
+        'Child: {{ name }}'
+        '</template>'
         '</template>');
     var template = div.firstChild;
     var m = toObservable({
       'name': 'Hermes',
-      'wife': {
-        'name': 'LaBarbara'
-      }
+      'wife': {'name': 'LaBarbara'}
     });
     templateBind(template).model = m;
 
@@ -2142,31 +2374,30 @@ templateInstantiationTests() {
       expect(div.nodes[3].text, 'Wife: LaBarbara');
 
       m['child'] = toObservable({'name': 'Dwight'});
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 6);
+          expect(div.nodes[5].text, 'Child: Dwight');
 
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 6);
-      expect(div.nodes[5].text, 'Child: Dwight');
-
-      m.remove('wife');
-
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 5);
-      expect(div.nodes[4].text, 'Child: Dwight');
-    });
+          m.remove('wife');
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 5);
+          expect(div.nodes[4].text, 'Child: Dwight');
+        });
   });
 
   test('BindRecursive', () {
-    var div = createTestHtml(
-        '<template bind="{{}}" if="{{}}" id="t">'
-          'Name: {{ name }}'
-          '<template bind="{{friend}}" if="{{friend}}" ref="t"></template>'
+    var div = createTestHtml('<template bind="{{}}" if="{{}}" id="t">'
+        'Name: {{ name }}'
+        '<template bind="{{friend}}" if="{{friend}}" ref="t"></template>'
         '</template>');
     var template = div.firstChild;
     var m = toObservable({
       'name': 'Fry',
-      'friend': {
-        'name': 'Bender'
-      }
+      'friend': {'name': 'Bender'}
     });
     templateBind(template).model = m;
     return new Future(() {
@@ -2175,32 +2406,35 @@ templateInstantiationTests() {
       expect(div.nodes[3].text, 'Name: Bender');
 
       m['friend']['friend'] = toObservable({'name': 'Leela'});
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 7);
-      expect(div.nodes[5].text, 'Name: Leela');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 7);
+          expect(div.nodes[5].text, 'Name: Leela');
 
-      m['friend'] = toObservable({'name': 'Leela'});
-    }).then(endOfMicrotask).then((_) {
-      expect(div.nodes.length, 5);
-      expect(div.nodes[3].text, 'Name: Leela');
-    });
+          m['friend'] = toObservable({'name': 'Leela'});
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(div.nodes.length, 5);
+          expect(div.nodes[3].text, 'Name: Leela');
+        });
   });
 
   test('Template - Self is terminator', () {
-    var div = createTestHtml(
-        '<template repeat>{{ foo }}'
-          '<template bind></template>'
+    var div = createTestHtml('<template repeat>{{ foo }}'
+        '<template bind></template>'
         '</template>');
     var template = div.firstChild;
 
-    var m = toObservable([{ 'foo': 'bar' }]);
+    var m = toObservable([
+      {'foo': 'bar'}
+    ]);
     templateBind(template).model = m;
     return new Future(() {
-
-      m.add(toObservable({ 'foo': 'baz' }));
+      m.add(toObservable({'foo': 'baz'}));
       templateBind(template).model = m;
     }).then(endOfMicrotask).then((_) {
-
       expect(div.nodes.length, 5);
       expect(div.nodes[1].text, 'bar');
       expect(div.nodes[3].text, 'baz');
@@ -2213,7 +2447,10 @@ templateInstantiationTests() {
     var div = createTestHtml('<template repeat>{{ foo }}</template>');
     var template = div.firstChild;
 
-    var m = toObservable([{ 'foo': 'bar' }, { 'foo': 'bat'}]);
+    var m = toObservable([
+      {'foo': 'bar'},
+      {'foo': 'bat'}
+    ]);
     templateBind(template).model = m;
     var observer = new MutationObserver((x, y) {});
     return new Future(() {
@@ -2228,10 +2465,9 @@ templateInstantiationTests() {
   });
 
   test('RecursiveRef', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<template id=src>{{ foo }}</template>'
-          '<template bind ref=src></template>'
+    var div = createTestHtml('<template bind>'
+        '<template id=src>{{ foo }}</template>'
+        '<template bind ref=src></template>'
         '</template>');
 
     var m = toObservable({'foo': 'bar'});
@@ -2265,11 +2501,10 @@ templateInstantiationTests() {
   });
 
   test('ChangeRefId', () {
-    var div = createTestHtml(
-        '<template id="a">a:{{ }}</template>'
+    var div = createTestHtml('<template id="a">a:{{ }}</template>'
         '<template id="b">b:{{ }}</template>'
         '<template repeat="{{}}">'
-          '<template ref="a" bind="{{}}"></template>'
+        '<template ref="a" bind="{{}}"></template>'
         '</template>');
     var template = div.nodes[2];
     var model = toObservable([]);
@@ -2282,7 +2517,6 @@ templateInstantiationTests() {
 
       model..add(1)..add(2);
     }).then(endOfMicrotask).then((_) {
-
       expect(div.nodes.length, 7);
       expect(div.nodes[4].text, 'b:1');
       expect(div.nodes[6].text, 'b:2');
@@ -2290,8 +2524,7 @@ templateInstantiationTests() {
   });
 
   test('Content', () {
-    var div = createTestHtml(
-        '<template><a></a></template>'
+    var div = createTestHtml('<template><a></a></template>'
         '<template><b></b></template>');
     var templateA = div.nodes.first;
     var templateB = div.nodes.last;
@@ -2321,15 +2554,14 @@ templateInstantiationTests() {
   });
 
   test('NestedContent', () {
-    var div = createTestHtml(
-        '<template>'
+    var div = createTestHtml('<template>'
         '<template></template>'
         '</template>');
     var templateA = div.nodes.first;
     var templateB = templateBind(templateA).content.nodes.first;
 
-    expect(templateB.ownerDocument, templateBind(templateA)
-        .content.ownerDocument);
+    expect(
+        templateB.ownerDocument, templateBind(templateA).content.ownerDocument);
     expect(templateBind(templateB).content.ownerDocument,
         templateBind(templateA).content.ownerDocument);
   });
@@ -2337,8 +2569,8 @@ templateInstantiationTests() {
   test('BindShadowDOM', () {
     if (!ShadowRoot.supported) return null;
 
-    var root = createShadowTestHtml(
-        '<template bind="{{}}">Hi {{ name }}</template>');
+    var root =
+        createShadowTestHtml('<template bind="{{}}">Hi {{ name }}</template>');
     var model = toObservable({'name': 'Leela'});
     templateBind(root.firstChild).model = model;
     return new Future(() => expect(root.nodes[1].text, 'Hi Leela'));
@@ -2377,54 +2609,64 @@ templateInstantiationTests() {
   // https://github.com/Polymer/TemplateBinding/issues/8
   test('UnbindingInNestedBind', () {
     var div = createTestHtml(
-      '<template bind="{{outer}}" if="{{outer}}" syntax="testHelper">'
+        '<template bind="{{outer}}" if="{{outer}}" syntax="testHelper">'
         '<template bind="{{inner}}" if="{{inner}}">'
-          '{{ age }}'
+        '{{ age }}'
         '</template>'
-      '</template>');
+        '</template>');
     var template = div.firstChild;
     var syntax = new UnbindingInNestedBindSyntax();
-    var model = toObservable({'outer': {'inner': {'age': 42}}});
+    var model = toObservable({
+      'outer': {
+        'inner': {'age': 42}
+      }
+    });
 
-    templateBind(template)..model = model..bindingDelegate = syntax;
+    templateBind(template)
+      ..model = model
+      ..bindingDelegate = syntax;
 
     return new Future(() {
       expect(syntax.count, 1);
 
       var inner = model['outer']['inner'];
       model['outer'] = null;
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(syntax.count, 1);
 
-    }).then(endOfMicrotask).then((_) {
-      expect(syntax.count, 1);
-
-      model['outer'] = toObservable({'inner': {'age': 2}});
-      syntax.expectedAge = 2;
-
-    }).then(endOfMicrotask).then((_) {
-      expect(syntax.count, 2);
-    });
+          model['outer'] = toObservable({
+            'inner': {'age': 2}
+          });
+          syntax.expectedAge = 2;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(syntax.count, 2);
+        });
   });
 
   // https://github.com/toolkitchen/mdv/issues/8
   test('DontCreateInstancesForAbandonedIterators', () {
-    var div = createTestHtml(
-      '<template bind="{{}} {{}}">'
+    var div = createTestHtml('<template bind="{{}} {{}}">'
         '<template bind="{{}}">Foo</template>'
-      '</template>');
+        '</template>');
     var template = div.firstChild;
     templateBind(template).model = null;
     return nextMicrotask;
   });
 
   test('CreateInstance', () {
-    var div = createTestHtml(
-      '<template bind="{{a}}">'
+    var div = createTestHtml('<template bind="{{a}}">'
         '<template bind="{{b}}">'
-          '{{ foo }}:{{ replaceme }}'
+        '{{ foo }}:{{ replaceme }}'
         '</template>'
-      '</template>');
+        '</template>');
     var outer = templateBind(div.nodes.first);
-    var model = toObservable({'b': {'foo': 'bar'}});
+    var model = toObservable({
+      'b': {'foo': 'bar'}
+    });
 
     var instance = outer.createInstance(model, new TestBindingSyntax());
     expect(instance.firstChild.nextNode.text, 'bar:replaced');
@@ -2441,34 +2683,36 @@ templateInstantiationTests() {
   });
 
   test('CreateInstance - async error', () {
-    var div = createTestHtml(
-      '<template>'
+    var div = createTestHtml('<template>'
         '<template bind="{{b}}">'
-          '{{ foo }}:{{ replaceme }}'
+        '{{ foo }}:{{ replaceme }}'
         '</template>'
-      '</template>');
+        '</template>');
     var outer = templateBind(div.nodes.first);
     var model = toObservable({'b': 1}); // missing 'foo' should throw.
 
     bool seen = false;
     runZoned(() => outer.createInstance(model, new TestBindingSyntax()),
-      onError: (e) {
-        _expectNoSuchMethod(e);
-        seen = true;
-      });
-    return new Future(() { expect(seen, isTrue); });
+        onError: (e) {
+      _expectNoSuchMethod(e);
+      seen = true;
+    });
+    return new Future(() {
+      expect(seen, isTrue);
+    });
   });
 
   test('Repeat - svg', () {
-    var div = createTestHtml(
-        '<svg width="400" height="110">'
-          '<template repeat>'
-            '<rect width="{{ width }}" height="{{ height }}" />'
-          '</template>'
+    var div = createTestHtml('<svg width="400" height="110">'
+        '<template repeat>'
+        '<rect width="{{ width }}" height="{{ height }}" />'
+        '</template>'
         '</svg>');
 
-    var model = toObservable([{ 'width': 10, 'height': 11 },
-                              { 'width': 20, 'height': 21 }]);
+    var model = toObservable([
+      {'width': 10, 'height': 11},
+      {'width': 20, 'height': 21}
+    ]);
     var svg = div.firstChild;
     var template = svg.firstChild;
     templateBind(template).model = model;
@@ -2484,13 +2728,12 @@ templateInstantiationTests() {
 
   test('Bootstrap', () {
     var div = new DivElement();
-    div.innerHtml =
-      '<template>'
+    div.innerHtml = '<template>'
         '<div></div>'
         '<template>'
-          'Hello'
+        'Hello'
         '</template>'
-      '</template>';
+        '</template>';
 
     TemplateBindExtension.bootstrap(div);
     var template = templateBind(div.nodes.first);
@@ -2500,13 +2743,12 @@ templateInstantiationTests() {
     expect(template2.content.nodes.first.text, 'Hello');
 
     template = new Element.tag('template');
-    template.innerHtml =
-      '<template>'
+    template.innerHtml = '<template>'
         '<div></div>'
         '<template>'
-          'Hello'
+        'Hello'
         '</template>'
-      '</template>';
+        '</template>';
 
     TemplateBindExtension.bootstrap(template);
     template2 = templateBind(templateBind(template).content.nodes.first);
@@ -2517,13 +2759,12 @@ templateInstantiationTests() {
   });
 
   test('issue-285', () {
-    var div = createTestHtml(
-        '<template>'
-          '<template bind if="{{show}}">'
-            '<template id=del repeat="{{items}}">'
-              '{{}}'
-            '</template>'
-          '</template>'
+    var div = createTestHtml('<template>'
+        '<template bind if="{{show}}">'
+        '<template id=del repeat="{{items}}">'
+        '{{}}'
+        '</template>'
+        '</template>'
         '</template>');
 
     var template = div.firstChild;
@@ -2533,22 +2774,25 @@ templateInstantiationTests() {
       'items': [1]
     });
 
-    div.append(templateBind(template).createInstance(model,
-        new Issue285Syntax()));
+    div.append(
+        templateBind(template).createInstance(model, new Issue285Syntax()));
 
     return new Future(() {
       expect(template.nextNode.nextNode.nextNode.text, '2');
       model['show'] = false;
-    }).then(endOfMicrotask).then((_) {
-      model['show'] = true;
-    }).then(endOfMicrotask).then((_) {
-      expect(template.nextNode.nextNode.nextNode.text, '2');
-    });
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          model['show'] = true;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(template.nextNode.nextNode.nextNode.text, '2');
+        });
   });
 
   test('Accessor value retrieval count', () {
-    var div = createTestHtml(
-        '<template bind>{{ prop }}</template>');
+    var div = createTestHtml('<template bind>{{ prop }}</template>');
 
     var model = new TestAccessorModel();
 
@@ -2561,24 +2805,19 @@ templateInstantiationTests() {
       // Dart note: we don't handle getters in @observable, so we need to
       // notify regardless.
       model.notifyPropertyChange(#prop, 1, model.value);
-
     }).then(endOfMicrotask).then((_) {
       expect(model.count, 2);
     });
   });
 
   test('issue-141', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<div foo="{{foo1}} {{foo2}}" bar="{{bar}}"></div>'
+    var div = createTestHtml('<template bind>'
+        '<div foo="{{foo1}} {{foo2}}" bar="{{bar}}"></div>'
         '</template>');
 
     var template = div.firstChild;
-    var model = toObservable({
-      'foo1': 'foo1Value',
-      'foo2': 'foo2Value',
-      'bar': 'barValue'
-    });
+    var model = toObservable(
+        {'foo1': 'foo1Value', 'foo2': 'foo2Value', 'bar': 'barValue'});
 
     templateBind(template).model = model;
     return new Future(() {
@@ -2589,15 +2828,16 @@ templateInstantiationTests() {
   test('issue-18', () {
     var delegate = new Issue18Syntax();
 
-    var div = createTestHtml(
-        '<template bind>'
-          '<div class="foo: {{ bar }}"></div>'
+    var div = createTestHtml('<template bind>'
+        '<div class="foo: {{ bar }}"></div>'
         '</template>');
 
     var template = div.firstChild;
     var model = toObservable({'bar': 2});
 
-    templateBind(template)..model = model..bindingDelegate = delegate;
+    templateBind(template)
+      ..model = model
+      ..bindingDelegate = delegate;
 
     return new Future(() {
       expect(div.lastChild.attributes['class'], 'foo: 2');
@@ -2605,8 +2845,7 @@ templateInstantiationTests() {
   });
 
   test('issue-152', () {
-    var div = createTestHtml(
-        '<template ref=notThere bind>XXX</template>');
+    var div = createTestHtml('<template ref=notThere bind>XXX</template>');
 
     var template = div.firstChild;
     templateBind(template).model = {};
@@ -2621,21 +2860,16 @@ templateInstantiationTests() {
 
 compatTests() {
   test('underbar bindings', () {
-    var div = createTestHtml(
-        '<template bind>'
-          '<div _style="color: {{ color }};"></div>'
-          '<img _src="{{ url }}">'
-          '<a _href="{{ url2 }}">Link</a>'
-          '<input type="number" _value="{{ number }}">'
+    var div = createTestHtml('<template bind>'
+        '<div _style="color: {{ color }};"></div>'
+        '<img _src="{{ url }}">'
+        '<a _href="{{ url2 }}">Link</a>'
+        '<input type="number" _value="{{ number }}">'
         '</template>');
 
     var template = div.firstChild;
-    var model = toObservable({
-      'color': 'red',
-      'url': 'pic.jpg',
-      'url2': 'link.html',
-      'number': 4
-    });
+    var model = toObservable(
+        {'color': 'red', 'url': 'pic.jpg', 'url2': 'link.html', 'number': 4});
 
     templateBind(template).model = model;
     return new Future(() {
@@ -2709,7 +2943,7 @@ class BindIfMinimalDiscardChanges extends BindingDelegate {
 
   prepareBinding(path, name, node) {
     return (model, node, oneTime) =>
-      new DiscardCountingPathObserver(discardChangesCalled, model, path);
+        new DiscardCountingPathObserver(discardChangesCalled, model, path);
   }
 }
 
@@ -2726,7 +2960,8 @@ class DiscardCountingPathObserver extends PathObserver {
 }
 
 class TestAccessorModel extends AutoObservable {
-  @observable var value = 1;
+  @observable
+  var value = 1;
   var count = 0;
 
   @reflectable

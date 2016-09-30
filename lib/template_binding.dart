@@ -114,14 +114,15 @@ NodeBindExtension nodeBindFallback(Node node) {
   return extension;
 }
 
-
-bool _isAttributeTemplate(Element n) => n.attributes.containsKey('template') &&
+bool _isAttributeTemplate(Element n) =>
+    n.attributes.containsKey('template') &&
     _SEMANTIC_TEMPLATE_TAGS.containsKey(n.localName);
 
-bool _isSvgTemplate(Element el) => el.tagName == 'template' &&
-    el.namespaceUri == 'http://www.w3.org/2000/svg';
+bool _isSvgTemplate(Element el) =>
+    el.tagName == 'template' && el.namespaceUri == 'http://www.w3.org/2000/svg';
 
-bool _isHtmlTemplate(Element el) => el.tagName == 'TEMPLATE' &&
+bool _isHtmlTemplate(Element el) =>
+    el.tagName == 'TEMPLATE' &&
     el.namespaceUri == 'http://www.w3.org/1999/xhtml';
 
 /**
@@ -133,12 +134,12 @@ bool _isHtmlTemplate(Element el) => el.tagName == 'TEMPLATE' &&
  * form are table elements (THEAD, TBODY, TFOOT, TH, TR, TD, CAPTION, COLGROUP
  * and COL), OPTION, and OPTGROUP.
  */
-bool isSemanticTemplate(Node n) => n is Element &&
+bool isSemanticTemplate(Node n) =>
+    n is Element &&
     (_isHtmlTemplate(n) || _isAttributeTemplate(n) || _isSvgTemplate(n));
 
 /** Returns true if this is the staging document for a template. */
 bool isTemplateStagingDocument(Document d) => _isStagingDocument[d] == true;
-
 
 /**
  * True to enable [NodeBindingExtension.bindings]. This can be used by tools
@@ -166,7 +167,6 @@ const _SEMANTIC_TEMPLATE_TAGS = const {
   'thead': null,
   'tr': null,
 };
-
 
 // TODO(jmesserly): investigate if expandos give us enough performance.
 

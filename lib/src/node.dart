@@ -28,7 +28,7 @@ class NodeBindExtension {
     // TODO(jmesserly): should cache this for identity.
     return new _NodeBindingsMap(_node, b);
   }
-  
+
   set bindings(Map<String, Bindable> value) {
     if (value == null) {
       _js.deleteProperty('bindings_');
@@ -67,9 +67,9 @@ class NodeBindExtension {
   TemplateInstance _templateInstance;
 
   /** Gets the template instance that instantiated this node, if any. */
-  TemplateInstance get templateInstance =>
-      _templateInstance != null ? _templateInstance :
-      (_node.parent != null ? nodeBind(_node.parent).templateInstance : null);
+  TemplateInstance get templateInstance => _templateInstance != null
+      ? _templateInstance
+      : (_node.parent != null ? nodeBind(_node.parent).templateInstance : null);
 }
 
 class _NodeBindingsMap extends MapBase<String, Bindable> {
@@ -79,25 +79,26 @@ class _NodeBindingsMap extends MapBase<String, Bindable> {
   _NodeBindingsMap(this._node, this._bindings);
 
   // TODO(jmesserly): this should be lazy
-  Iterable<String> get keys =>
-      js.context['Object'].callMethod('keys', [_bindings]).map(
-          (name) => _jsToDartName(_node, name));
+  Iterable<String> get keys => js.context['Object'].callMethod(
+      'keys', [_bindings]).map((name) => _jsToDartName(_node, name));
 
-  Bindable operator[](String name) =>
+  Bindable operator [](String name) =>
       jsObjectToBindable(_bindings[_dartToJsName(_node, name)]);
 
-  operator[]=(String name, Bindable value) {
+  operator []=(String name, Bindable value) {
     _bindings[_dartToJsName(_node, name)] = bindableToJsObject(value);
   }
 
-  @override Bindable remove(String name) {
+  @override
+  Bindable remove(String name) {
     name = _dartToJsName(_node, name);
     var old = this[name];
     _bindings.deleteProperty(name);
     return old;
   }
 
-  @override void clear() {
+  @override
+  void clear() {
     // Notes: this implementation only works because our "keys" returns a copy.
     // We could also make it O(1) by assigning a new JS object to the bindings_
     // property, if performance is an issue.
@@ -115,12 +116,10 @@ String _dartToJsName(Node node, String name) {
   return name;
 }
 
-
 String _jsToDartName(Node node, String name) {
   if (node is Text && name == 'textContent') name = 'text';
   return name;
 }
-
 
 /// Given a bindable [JsObject], wraps it in a Dart [Bindable].
 /// See [bindableToJsObject] to go in the other direction.
@@ -137,8 +136,8 @@ class _JsBindable extends Bindable {
   final JsObject _js;
   _JsBindable(JsObject obj) : _js = obj;
 
-  open(callback) => _js.callMethod('open',
-      [Zone.current.bindUnaryCallback(callback)]);
+  open(callback) =>
+      _js.callMethod('open', [Zone.current.bindUnaryCallback(callback)]);
 
   close() => _js.callMethod('close');
 
@@ -161,8 +160,8 @@ JsObject bindableToJsObject(Bindable bindable) {
   inZoneUnary(f) => zone.bindUnaryCallback(f, runGuarded: false);
 
   return new JsObject.jsify({
-    'open': inZoneUnary(
-        (callback) => bindable.open((x) => callback.apply([x]))),
+    'open':
+        inZoneUnary((callback) => bindable.open((x) => callback.apply([x]))),
     'close': inZone(() => bindable.close()),
     'discardChanges': inZone(() => bindable.value),
     'setValue': inZoneUnary((x) => bindable.value = x),

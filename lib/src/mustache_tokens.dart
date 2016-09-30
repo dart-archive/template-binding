@@ -31,8 +31,10 @@ class MustacheTokens {
   static const _TOKEN_ENDTEXT = 1;
 
   bool get hasOnePath => _tokens.length == _TOKEN_SIZE + _TOKEN_ENDTEXT;
-  bool get isSimplePath => hasOnePath &&
-      _tokens[_TOKEN_TEXT] == '' && _tokens[_TOKEN_SIZE + _TOKEN_TEXT] == '';
+  bool get isSimplePath =>
+      hasOnePath &&
+      _tokens[_TOKEN_TEXT] == '' &&
+      _tokens[_TOKEN_SIZE + _TOKEN_TEXT] == '';
 
   /**
    * [TEXT, (ONE_TIME?, PATH, DELEGATE_FN, TEXT)+] if there is at least one
@@ -72,7 +74,6 @@ class MustacheTokens {
   Function getPrepareBinding(int i) =>
       _tokens[i * _TOKEN_SIZE + _TOKEN_PREPAREFN];
 
-
   /**
    * Parses {{ mustache }} bindings.
    *
@@ -91,8 +92,7 @@ class MustacheTokens {
       var oneTime = false;
       var terminator = '}}';
 
-      if (oneTimeStart >= 0 &&
-          (startIndex < 0 || oneTimeStart < startIndex)) {
+      if (oneTimeStart >= 0 && (startIndex < 0 || oneTimeStart < startIndex)) {
         startIndex = oneTimeStart;
         oneTime = true;
         terminator = ']]';
@@ -131,7 +131,6 @@ class MustacheTokens {
 
     return new MustacheTokens._(tokens, onlyOneTime);
   }
-
 
   // Dart note: split "combinator" into the single/list variants, so the
   // argument can be typed.

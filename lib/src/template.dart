@@ -27,16 +27,18 @@ class TemplateBindExtension extends NodeBindExtension {
 
   Element get _node => super._node;
 
-  TemplateBindExtension get _self => _node is TemplateBindExtension
-      ? _node : this;
+  TemplateBindExtension get _self =>
+      _node is TemplateBindExtension ? _node : this;
 
   Bindable bind(String name, value, {bool oneTime: false}) {
     if (name != 'ref') return super.bind(name, value, oneTime: oneTime);
 
-    var ref = oneTime ? value : value.open((ref) {
-      _node.attributes['ref'] = ref;
-      _refChanged();
-    });
+    var ref = oneTime
+        ? value
+        : value.open((ref) {
+            _node.attributes['ref'] = ref;
+            _refChanged();
+          });
 
     _node.attributes['ref'] = ref;
     _refChanged();
@@ -52,7 +54,6 @@ class TemplateBindExtension extends NodeBindExtension {
     if (directives._if == null &&
         directives._bind == null &&
         directives._repeat == null) {
-
       if (_iterator != null) {
         _iterator.close();
         _iterator = null;
@@ -66,8 +67,8 @@ class TemplateBindExtension extends NodeBindExtension {
 
     _iterator._updateDependencies(directives, model);
 
-    _templateObserver.observe(_node,
-        attributes: true, attributeFilter: ['ref']);
+    _templateObserver
+        .observe(_node, attributes: true, attributeFilter: ['ref']);
 
     return _iterator;
   }
@@ -110,8 +111,8 @@ class TemplateBindExtension extends NodeBindExtension {
       if (c.nextNode == null) collectTerminator = true;
 
       final childMap = map != null ? map.getChild(i) : null;
-      var clone = _cloneAndBindInstance(c, instance, _stagingDocument,
-          childMap, model, delegate, instanceExt._bindings);
+      var clone = _cloneAndBindInstance(c, instance, _stagingDocument, childMap,
+          model, delegate, instanceExt._bindings);
 
       nodeBindFallback(clone)._templateInstance = instanceRecord;
       if (collectTerminator) instanceExt._terminator = clone;
@@ -148,7 +149,6 @@ class TemplateBindExtension extends NodeBindExtension {
    * to configure custom syntax for `{{bindings}}` inside this template.
    */
   BindingDelegate get bindingDelegate => _bindingDelegate;
-
 
   void set bindingDelegate(BindingDelegate value) {
     if (_bindingDelegate != null) {
@@ -257,14 +257,14 @@ class TemplateBindExtension extends NodeBindExtension {
           throw new ArgumentError('instanceRef should not be supplied for '
               'attribute templates.');
         }
-        templateElementExt = templateBind(
-            _extractTemplateFromAttributeTemplate(_node));
+        templateElementExt =
+            templateBind(_extractTemplateFromAttributeTemplate(_node));
         templateElementExt._templateIsDecorated = true;
         isNativeHtmlTemplate = templateElementExt._node is TemplateElement;
         liftRoot = true;
       } else if (_isSvgTemplate(_node)) {
-        templateElementExt = templateBind(
-            _extractTemplateFromSvgTemplate(_node));
+        templateElementExt =
+            templateBind(_extractTemplateFromSvgTemplate(_node));
         templateElementExt._templateIsDecorated = true;
         isNativeHtmlTemplate = templateElementExt._node is TemplateElement;
       }
@@ -367,9 +367,8 @@ class TemplateBindExtension extends NodeBindExtension {
     return template;
   }
 
-  static void _liftNonNativeChildrenIntoContent(TemplateBindExtension template,
-      Element el, bool useRoot) {
-
+  static void _liftNonNativeChildrenIntoContent(
+      TemplateBindExtension template, Element el, bool useRoot) {
     var content = template.content;
     if (useRoot) {
       content.append(el);
@@ -409,8 +408,7 @@ class TemplateBindExtension extends NodeBindExtension {
     descendents.forEach(_bootstrap);
   }
 
-  static final String _allTemplatesSelectors =
-      'template, ' +
+  static final String _allTemplatesSelectors = 'template, ' +
       _SEMANTIC_TEMPLATE_TAGS.keys.map((k) => "$k[template]").join(", ");
 
   static bool _initStyles;
@@ -422,7 +420,7 @@ class TemplateBindExtension extends NodeBindExtension {
     _initStyles = true;
 
     var style = new StyleElement()
-        ..text = '$_allTemplatesSelectors { display: none; }';
+      ..text = '$_allTemplatesSelectors { display: none; }';
     document.head.append(style);
   }
 
@@ -459,7 +457,6 @@ class TemplateBindExtension extends NodeBindExtension {
       templateBindFallback(record.target)._refChanged();
     }
   });
-
 }
 
 final DocumentFragment _emptyInstance = () {

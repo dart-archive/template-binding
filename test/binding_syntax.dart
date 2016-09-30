@@ -19,9 +19,8 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
   test('prepareBinding', () {
     var model = fooModel('bar');
     var testSyntax = new TestBindingSyntax();
-    var div = createTestHtml(
-        '<template bind>{{ foo }}'
-          '<template bind>{{ foo }}</template>'
+    var div = createTestHtml('<template bind>{{ foo }}'
+        '<template bind>{{ foo }}</template>'
         '</template>');
     var template = templateBind(div.firstChild);
     template
@@ -57,7 +56,6 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
       ..model = model
       ..bindingDelegate = testSyntax;
     return new Future(() {
-
       expect(div.nodes.length, 4);
       expect(div.nodes[0].tagName, 'TEMPLATE');
       expect(div.nodes[1].text, 'a');
@@ -106,7 +104,6 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
       ..model = model
       ..bindingDelegate = delegate;
     return new Future(() {
-
       expect(div.nodes.length, 4);
       expect(div.nodes[0].tagName, 'TEMPLATE');
       expect(div.nodes[1].text, 'a');
@@ -124,13 +121,16 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
 
       model.removeAt(1);
     }).then(endOfMicrotask).then((_) {
-
-      expect(delegate.log, [['bindFn', 'c', 1]], reason: 'removed item');
+      expect(
+          delegate.log,
+          [
+            ['bindFn', 'c', 1]
+          ],
+          reason: 'removed item');
 
       expect(div.nodes.skip(1).map((n) => n.text), ['a', 'c']);
     });
   });
-
 
   test('Update bindingDelegate with active template', () {
     var model = toObservable([1, 2]);
@@ -169,8 +169,7 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
 
   test('Basic', () {
     var model = fooModel(2, 4);
-    var div = createTestHtml(
-        '<template bind>'
+    var div = createTestHtml('<template bind>'
         '{{ foo }} + {{ 2x: bar }} + {{ 4x: bar }}</template>');
     var template = templateBind(div.firstChild);
     template
@@ -193,7 +192,9 @@ syntaxTests(FooBarModel fooModel([foo, bar])) {
 
     var div = createTestHtml('<template bind>[[ 2x: bar ]]</template>');
     var template = templateBind(div.firstChild);
-    template..bindingDelegate = delegateFoo..model = {};
+    template
+      ..bindingDelegate = delegateFoo
+      ..model = {};
 
     return new Future(() {
       expect(div.nodes.length, 2);
@@ -226,8 +227,9 @@ class TestBindingSyntax extends BindingDelegate {
     return (model, node, oneTime) {
       var tagName = node is Element ? node.tagName : 'TEXT';
       log.add(['bindFn', model, tagName, id]);
-      return oneTime ? new PropertyPath(path).getValueFrom(model) :
-          new PathObserver(model, path);
+      return oneTime
+          ? new PropertyPath(path).getValueFrom(model)
+          : new PathObserver(model, path);
     };
   }
 }
@@ -265,7 +267,6 @@ class TestInstanceModelSyntax extends BindingDelegate {
   }
 }
 
-
 class TestPositionChangedSyntax extends BindingDelegate {
   var log = [];
 
@@ -277,7 +278,6 @@ class TestPositionChangedSyntax extends BindingDelegate {
     };
   }
 }
-
 
 class TimesTwoSyntax extends BindingDelegate {
   prepareBinding(path, name, node) {
@@ -302,11 +302,11 @@ class UpdateBindingDelegateA extends UpdateBindingDelegateBase {
     if (path == '\$index') return bindingHandler('i', 'index');
   }
 
-  prepareInstanceModel(template) => (model) => toObservable({ 'id': model });
+  prepareInstanceModel(template) => (model) => toObservable({'id': model});
 
   prepareInstancePositionChanged(template) => (templateInstance, index) {
-    templateInstance.model['index'] = index;
-  };
+        templateInstance.model['index'] = index;
+      };
 }
 
 class UpdateBindingDelegateB extends UpdateBindingDelegateBase {
@@ -316,11 +316,9 @@ class UpdateBindingDelegateB extends UpdateBindingDelegateBase {
   }
 
   prepareInstanceModel(template) =>
-      (model) => toObservable({ 'id': '${model}-narg' });
-
+      (model) => toObservable({'id': '${model}-narg'});
 
   prepareInstancePositionChanged(template) => (templateInstance, index) {
-    templateInstance.model['index'] = 2 * index;
-  };
+        templateInstance.model['index'] = 2 * index;
+      };
 }
-

@@ -19,15 +19,15 @@ import 'package:smoke/mirrors.dart' as smoke;
 Future _registered;
 
 main() => dirtyCheckZone().run(() {
-  smoke.useMirrors();
-  useHtmlConfiguration();
+      smoke.useMirrors();
+      useHtmlConfiguration();
 
-  _registered = customElementsReady.then((_) {
-    document.registerElement('my-custom-element', MyCustomElement);
-  });
+      _registered = customElementsReady.then((_) {
+        document.registerElement('my-custom-element', MyCustomElement);
+      });
 
-  group('Custom Element Bindings', customElementBindingsTest);
-});
+      group('Custom Element Bindings', customElementBindingsTest);
+    });
 
 customElementBindingsTest() {
   setUp(() {
@@ -44,11 +44,11 @@ customElementBindingsTest() {
     var element = new MyCustomElement();
     var model = toObservable({'a': new Point(123, 444), 'b': new Monster(100)});
 
-    var pointBinding = nodeBind(element)
-        .bind('my-point', new PathObserver(model, 'a'));
+    var pointBinding =
+        nodeBind(element).bind('my-point', new PathObserver(model, 'a'));
 
-    var scaryBinding = nodeBind(element)
-        .bind('scary-monster', new PathObserver(model, 'b'));
+    var scaryBinding =
+        nodeBind(element).bind('scary-monster', new PathObserver(model, 'b'));
 
     expect(element.attributes, isNot(contains('my-point')));
     expect(element.attributes, isNot(contains('scary-monster')));
@@ -64,24 +64,27 @@ customElementBindingsTest() {
 
       model['a'] = new Point(1, 2);
       model['b'] = new Monster(200);
-    }).then(endOfMicrotask).then((_) {
-      expect(element.scaryMonster, model['b']);
-      expect(element.myPoint, null, reason: 'a was unbound');
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(element.scaryMonster, model['b']);
+          expect(element.myPoint, null, reason: 'a was unbound');
 
-      scaryBinding.close();
-      model['b'] = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(element.scaryMonster.health, 200);
-      expect(element.bindFinishedCalled, 0);
-    });
+          scaryBinding.close();
+          model['b'] = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(element.scaryMonster.health, 200);
+          expect(element.bindFinishedCalled, 0);
+        });
   });
 
   test('template bind uses overridden custom element bind', () {
-
     var model = toObservable({'a': new Point(123, 444), 'b': new Monster(100)});
     var div = createTestHtml('<template bind>'
-          '<my-custom-element my-point="{{a}}" scary-monster="{{b}}">'
-          '</my-custom-element>'
+        '<my-custom-element my-point="{{a}}" scary-monster="{{b}}">'
+        '</my-custom-element>'
         '</template>');
 
     templateBind(div.query('template')).model = model;
@@ -101,29 +104,33 @@ customElementBindingsTest() {
       expect(element.bindFinishedCalled, 1);
 
       model['a'] = null;
-    }).then(endOfMicrotask).then((_) {
-      expect(element.myPoint, null);
-      expect(element.bindFinishedCalled, 1);
+    })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(element.myPoint, null);
+          expect(element.bindFinishedCalled, 1);
 
+          templateBind(div.query('template')).model = null;
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          // Note: the detached element
+          expect(element.parentNode is DocumentFragment, true,
+              reason: 'removed element is added back to its document fragment');
+          expect(element.parentNode.parentNode, null,
+              reason: 'document fragment is detached');
+          expect(element.bindFinishedCalled, 1);
 
-      templateBind(div.query('template')).model = null;
-    }).then(endOfMicrotask).then((_) {
-      // Note: the detached element
-      expect(element.parentNode is DocumentFragment, true,
-          reason: 'removed element is added back to its document fragment');
-      expect(element.parentNode.parentNode, null,
-          reason: 'document fragment is detached');
-      expect(element.bindFinishedCalled, 1);
-
-      model['a'] = new Point(1, 2);
-      model['b'] = new Monster(200);
-    }).then(endOfMicrotask).then((_) {
-      expect(element.myPoint, null, reason: 'model was unbound');
-      expect(element.scaryMonster.health, 100, reason: 'model was unbound');
-      expect(element.bindFinishedCalled, 1);
-    });
+          model['a'] = new Point(1, 2);
+          model['b'] = new Monster(200);
+        })
+        .then(endOfMicrotask)
+        .then((_) {
+          expect(element.myPoint, null, reason: 'model was unbound');
+          expect(element.scaryMonster.health, 100, reason: 'model was unbound');
+          expect(element.bindFinishedCalled, 1);
+        });
   });
-
 }
 
 class Monster {
@@ -174,4 +181,3 @@ class MyCustomElement extends HtmlElement implements NodeBindExtension {
     if (property == 'scary-monster') scaryMonster = newValue;
   }
 }
-

@@ -30,8 +30,8 @@ _InstanceBindingMap _getBindings(Node node, BindingDelegate delegate) {
   }
 
   if (node is Text) {
-    var tokens = MustacheTokens.parse(node.text,
-        _getDelegateFactory('text', node, delegate));
+    var tokens = MustacheTokens.parse(
+        node.text, _getDelegateFactory('text', node, delegate));
     if (tokens != null) return new _InstanceBindingMap(['text', tokens]);
   }
 
@@ -49,17 +49,15 @@ void _addBindings(Node node, model, [BindingDelegate delegate]) {
   }
 }
 
-MustacheTokens _parseWithDefault(Element element, String name,
-    BindingDelegate delegate) {
-
+MustacheTokens _parseWithDefault(
+    Element element, String name, BindingDelegate delegate) {
   var v = element.attributes[name];
   if (v == '') v = '{{}}';
   return MustacheTokens.parse(v, _getDelegateFactory(name, element, delegate));
 }
 
-_InstanceBindingMap _parseAttributeBindings(Element element,
-    BindingDelegate delegate) {
-
+_InstanceBindingMap _parseAttributeBindings(
+    Element element, BindingDelegate delegate) {
   var bindings = null;
   var ifFound = false;
   var bindFound = false;
@@ -80,8 +78,8 @@ _InstanceBindingMap _parseAttributeBindings(Element element,
       return;
     }
 
-    var tokens = MustacheTokens.parse(value,
-        _getDelegateFactory(name, element, delegate));
+    var tokens = MustacheTokens.parse(
+        value, _getDelegateFactory(name, element, delegate));
     if (tokens != null) {
       if (bindings == null) bindings = [];
       bindings..add(name)..add(tokens);
@@ -91,14 +89,14 @@ _InstanceBindingMap _parseAttributeBindings(Element element,
   if (isTemplateNode) {
     if (bindings == null) bindings = [];
     var result = new _TemplateBindingMap(bindings)
-        .._if = _parseWithDefault(element, 'if', delegate)
-        .._bind = _parseWithDefault(element, 'bind', delegate)
-        .._repeat = _parseWithDefault(element, 'repeat', delegate);
+      .._if = _parseWithDefault(element, 'if', delegate)
+      .._bind = _parseWithDefault(element, 'bind', delegate)
+      .._repeat = _parseWithDefault(element, 'repeat', delegate);
 
     // Treat <template if> as <template bind if>
     if (result._if != null && result._bind == null && result._repeat == null) {
-      result._bind = MustacheTokens.parse('{{}}',
-          _getDelegateFactory('bind', element, delegate));
+      result._bind = MustacheTokens.parse(
+          '{{}}', _getDelegateFactory('bind', element, delegate));
     }
 
     return result;
@@ -108,11 +106,11 @@ _InstanceBindingMap _parseAttributeBindings(Element element,
 }
 
 _processOneTimeBinding(String name, MustacheTokens tokens, Node node, model) {
-
   if (tokens.hasOnePath) {
     var delegateFn = tokens.getPrepareBinding(0);
-    var value = delegateFn != null ? delegateFn(model, node, true) :
-        tokens.getPath(0).getValueFrom(model);
+    var value = delegateFn != null
+        ? delegateFn(model, node, true)
+        : tokens.getPath(0).getValueFrom(model);
     return tokens.isSimplePath ? value : tokens.combinator(value);
   }
 
@@ -121,22 +119,23 @@ _processOneTimeBinding(String name, MustacheTokens tokens, Node node, model) {
   var values = new List(tokens.length);
   for (int i = 0; i < tokens.length; i++) {
     Function delegateFn = tokens.getPrepareBinding(i);
-    values[i] = delegateFn != null ?
-        delegateFn(model, node, false) :
-        tokens.getPath(i).getValueFrom(model);
+    values[i] = delegateFn != null
+        ? delegateFn(model, node, false)
+        : tokens.getPath(i).getValueFrom(model);
   }
   return tokens.combinator(values);
 }
 
-_processSinglePathBinding(String name, MustacheTokens tokens, Node node,
-    model) {
+_processSinglePathBinding(
+    String name, MustacheTokens tokens, Node node, model) {
   Function delegateFn = tokens.getPrepareBinding(0);
-  var observer = delegateFn != null ?
-      delegateFn(model, node, false) :
-      new PathObserver(model, tokens.getPath(0));
+  var observer = delegateFn != null
+      ? delegateFn(model, node, false)
+      : new PathObserver(model, tokens.getPath(0));
 
-  return tokens.isSimplePath ? observer :
-      new ObserverTransform(observer, tokens.combinator);
+  return tokens.isSimplePath
+      ? observer
+      : new ObserverTransform(observer, tokens.combinator);
 }
 
 _processBinding(String name, MustacheTokens tokens, Node node, model) {
@@ -176,7 +175,6 @@ _processBinding(String name, MustacheTokens tokens, Node node, model) {
 
 void _processBindings(Node node, _InstanceBindingMap map, model,
     [List<Bindable> instanceBindings]) {
-
   final bindings = map.bindings;
   final nodeExt = nodeBind(node);
   for (var i = 0; i < bindings.length; i += 2) {
@@ -201,7 +199,6 @@ void _processBindings(Node node, _InstanceBindingMap map, model,
     instanceBindings.add(iter);
   }
 }
-
 
 // Note: this doesn't really implement most of Bindable. See:
 // https://github.com/Polymer/TemplateBinding/issues/147
@@ -449,7 +446,6 @@ class _TemplateIterator extends Bindable {
       for (var addIndex = splice.index;
           addIndex < splice.index + splice.addedCount;
           addIndex++) {
-
         var model = _iteratedValue[addIndex];
         DocumentFragment instance = instanceCache.remove(model);
         if (instance == null) {

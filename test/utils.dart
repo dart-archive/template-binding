@@ -37,8 +37,8 @@ recursivelySetTemplateModel(element, model, [delegate]) {
   for (var node in element.queryAll('*')) {
     if (isSemanticTemplate(node)) {
       templateBind(node)
-          ..bindingDelegate = delegate
-          ..model = model;
+        ..bindingDelegate = delegate
+        ..model = model;
     }
   }
 }
@@ -48,8 +48,10 @@ dispatchEvent(type, target) {
 }
 
 class FooBarModel extends AutoObservable {
-  @observable var foo;
-  @observable var bar;
+  @observable
+  var foo;
+  @observable
+  var bar;
 
   FooBarModel([this.foo, this.bar]);
 }
