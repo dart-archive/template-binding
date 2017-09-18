@@ -1,3 +1,6 @@
+#### Pub version 0.14.0+7
+  * Update to work with strong-mode clean Zone API.
+
 #### Pub version 0.14.0+6
   * Fixed bug whereby too much code was pruned in 0.14.0+5
 
