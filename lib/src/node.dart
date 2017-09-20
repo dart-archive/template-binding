@@ -156,8 +156,14 @@ JsObject bindableToJsObject(Bindable bindable) {
   if (bindable is _JsBindable) return bindable._js;
 
   var zone = Zone.current;
-  inZone(f) => zone.bindCallback(f, runGuarded: false);
-  inZoneUnary(f) => zone.bindUnaryCallback(f, runGuarded: false);
+  inZone<R>(R f()) {
+    var registered = zone.registerCallback(f);
+    return () => zone.run(registered);
+  }
+  inZoneUnary<R, T>(R f(T x)) {
+    var registered = zone.registerUnaryCallback(f);
+    return (x) => zone.runUnary(registered, x);
+  }
 
   return new JsObject.jsify({
     'open':
